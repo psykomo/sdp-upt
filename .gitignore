@@ -6,6 +6,9 @@
 /sdp-api-ci4/
 /sdp-frontend-reactrouter8/
 
+# Client desktop biometric suite (own source, not this repo)
+/SDP-Biometrik/
+
 .cursor/*
 !.cursor/rules/
 !.cursor/rules/**
