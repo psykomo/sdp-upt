@@ -1,0 +1,11 @@
+.run/
+.DS_Store
+
+# Separate remotes — do not add as gitlinks
+/102sdp/
+/sdp-api-ci4/
+/sdp-frontend-reactrouter8/
+
+.cursor/*
+!.cursor/rules/
+!.cursor/rules/**

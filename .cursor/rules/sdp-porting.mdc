@@ -1,0 +1,9 @@
+---
+description: Standing SDP agent rules. One-action strangler-fig port. Read AGENTS.md and docs/PORTING.md.
+globs: AGENTS.md,docs/PORTING.md,docs/PORTING-PROGRESS.md,sdp-api-ci4/**,sdp-frontend-reactrouter8/**,102sdp/system/application/controllers/**
+alwaysApply: false
+---
+
+# SDP
+
+Follow root [`AGENTS.md`](AGENTS.md). For a legacy URL or a new page/menu slice, also follow [`docs/PORTING.md`](docs/PORTING.md) and update [`docs/PORTING-PROGRESS.md`](docs/PORTING-PROGRESS.md).
