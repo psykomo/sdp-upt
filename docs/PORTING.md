@@ -96,6 +96,9 @@ Copy the last cutover helper rather than rewriting it.
 - `?legacy=1` sticky per page key; `?legacy=0` clears it
 - New key per URL so one flag does not pin the whole menu to PHP
 - Empty frontend base URL: skip redirect
+- Add the new key to `Sdp_sso::cutover_slices()` so UPT rollback can see it
+
+`prefer_legacy` check order: config `sdp_frontend_force_legacy` → Pusat file → local file → session `?legacy=1`. See [Rollback](#9-rollback).
 
 Public hosts (`sdp.caripasal.com`, `sdp-api…`, `sdp-front…`) already flow through `PublicOrigins` / `Sdp_sso` / `session.server.ts`. Never hard-code `127.0.0.1` into `links`.
 
@@ -130,3 +133,32 @@ Leave `SDP-Biometrik` as it is. Do not port capture into 8082. Do not convert th
 Officers enroll in `SDP.Registration.exe` (IE WebBrowser + Neurotec + `window.external`), which loads PHP `/biometricregistrasi`. Ubah on 8082 may keep daktil text and show existing photos. After a scan, reload the React page.
 
 The Java applet on `viewEdit` is dead. Do not revive it.
+
+## 9. Rollback
+
+No MariaDB change. PHP owns the switch so rollback still works when Node and CI4 are down.
+
+Files next to the local config wrapper (`102sdp/system/application/config/`), gitignored:
+
+| File | Who writes | Effect |
+|---|---|---|
+| `sdp_cutover.local.php` | UPT admin on 8080 `/CutoverRollback` | Per-slice stay on PHP |
+| `sdp_cutover.pusat.php` | Pusat patch / installer only | Same, and UPT cannot clear it |
+| `sdp_cutover.example.php` | tracked template | Copy-paste for Pusat |
+
+Shape (missing key = stay cut over):
+
+```php
+<?php
+return array(
+	'ManajemenIdentitasUbah' => true, // true = use PHP
+);
+```
+
+All Identitas slices: copy the example and uncomment `PencarianIdentitas` and `ManajemenIdentitas`. One slice: only that key. Drop or replace `sdp_cutover.pusat.php` through the same installer channel as other UPT updates. Do not edit tracked `__config.php`.
+
+Nuclear still works: empty `sdp_frontend_base_url`, or `sdp_frontend_force_legacy = true` in the local wrapper.
+
+UPT UI: http://127.0.0.1:8080/CutoverRollback (levels `1` / `4` / `99` / `103`, or Pusat / Kanwil). Toggles the local file only. Pusat lock shows as read-only (“dikunci Pusat”). Officers still enter cut-over pages from the 8080 menu; there is no 8082→8080 bounce.
+
+`?legacy=1` / `?legacy=0` stay as the officer-level hatch when neither file forces that key.

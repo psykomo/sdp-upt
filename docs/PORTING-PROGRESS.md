@@ -4,6 +4,10 @@ Update this file at the end of every finished slice. Rules: [`../AGENTS.md`](../
 
 Copy the last **Done** row. Do not rebuild auth, origins, lookups, or the UI shell.
 
+When a slice is cut over, add its key to `Sdp_sso::cutover_slices()` in `102sdp/system/application/libraries/Sdp_sso.php` so `/CutoverRollback` can toggle it.
+
+Per-slice rollback (no DB): UPT admin at http://127.0.0.1:8080/CutoverRollback writes `sdp_cutover.local.php`. Pusat drops `sdp_cutover.pusat.php` via installer. Missing key = stay cut over. See `docs/PORTING.md` §9.
+
 ## Done
 
 | Slice | Legacy URL | New UI | API | Cutover key | Notes |
@@ -44,4 +48,5 @@ Pick the next **menu** from the live legacy sidebar (logged in on 8080), then on
 - Identitas visual language in `sdp-frontend-reactrouter8/app/app.css`
 - Local-only `102sdp/system/application/config/config.php` (leave `__config.php` alone)
 - `?legacy=1` escape hatch on every cut-over URL
+- Per-slice rollback files `sdp_cutover.local.php` / `sdp_cutover.pusat.php` (not MariaDB); admin at `/CutoverRollback`
 - Do not port or rewrite `SDP-Biometrik` (Windows Neurotec host). Capture stays in that exe.
