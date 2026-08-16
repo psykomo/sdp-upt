@@ -15,6 +15,7 @@ Per-slice rollback (no DB): UPT admin at http://127.0.0.1:8080/CutoverRollback w
 | Pencarian identitas | `/PencarianIdentitas` | `/identitas` | `GET /api/v1/identitas`, `GET /api/v1/identitas/export` | `PencarianIdentitas` | Grid + analisa. Menu `10`. |
 | Lihat identitas | `/ManajemenIdentitas/lihat/{noin}` | `/identitas/:nomorInduk` | `GET /api/v1/identitas/{noin}` | `ManajemenIdentitas` | Read-only. Dukcapil / KTP panels skipped. |
 | Ubah identitas | `/ManajemenIdentitas/viewEdit/{noin}` | `/identitas/:nomorInduk/ubah` | `GET /api/v1/identitas/{noin}/form`, `PUT /api/v1/identitas/{noin}` | `ManajemenIdentitasUbah` | Writes biodata/alamat/pekerjaan/keluarga/fisik/foto. Ambil Foto is `getUserMedia` on the ubah form (same PUT). Dual password stays on PHP before redirect. Scanner sidik jari, dokumen, Dukcapil/KTP still legacy. |
+| Hapus identitas | `/ManajemenIdentitas/viewDelete/{noin}` | `/identitas/:nomorInduk/hapus` | `POST /api/v1/auth/supervisor`, `DELETE /api/v1/identitas/{noin}` | `ManajemenIdentitasHapus` | Supervisor dual password on 8082 (always, like PHP `viewDelete`). Grant required on DELETE. Refuses if open `perkara`. `?legacy=1` still uses PHP `LoginDP`. |
 
 Auth, JWT handover, public-host origins, lookups (`agama`, `pendidikan`, `kelamin`, `kewarganegaraan`), and the Identitas chrome are in place. Do not rebuild them.
 
@@ -24,7 +25,6 @@ These still open `http://127.0.0.1:8080`. Port next unless the user names a diff
 
 | Slice | Legacy URL | Suggested new UI | Suggested API |
 |---|---|---|---|
-| Hapus | `/ManajemenIdentitas/viewDelete/{noin}` | `/identitas/:nomorInduk/hapus` | `POST` or `DELETE /api/v1/identitas/{noin}` |
 | Tambah | `/AddIdentitas` | `/identitas/baru` | `POST /api/v1/identitas` |
 | Cetak identitas | `/LaporanIdentitas/cetak_identitas_napi/{noin}` | keep PDF on legacy until print is ported | — |
 | Cetak tahanan | `/LaporanIdentitas/cetak_identitas_tahanan/{noin}` | same | — |
@@ -32,7 +32,7 @@ These still open `http://127.0.0.1:8080`. Port next unless the user names a diff
 | Rekam sidik jari | `SDP.Registration.exe` → `/biometricregistrasi` | **keep desktop app** | — |
 | Dukcapil / KTP | panels on ManajemenIdentitas | skip until needed | — |
 
-Hapus is the natural next Identitas slice: confirm + soft-delete, dual password on PHP.
+Tambah is the natural next Identitas slice.
 
 ## After Identitas
 
@@ -40,7 +40,7 @@ Pick the next **menu** from the live legacy sidebar (logged in on 8080), then on
 
 | Menu | ID_MENU | Status |
 |---|---|---|
-| Manajemen Identitas | `10` | Search + lihat + ubah done |
+| Manajemen Identitas | `10` | Search + lihat + ubah + hapus done |
 
 ## Do not regress
 
