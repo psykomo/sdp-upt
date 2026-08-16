@@ -1,0 +1,8 @@
+{
+  "git.autoRepositoryDetection": true,
+  "git.scanRepositories": [
+    "102sdp",
+    "sdp-api-ci4",
+    "sdp-frontend-reactrouter8"
+  ]
+}

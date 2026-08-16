@@ -122,3 +122,11 @@ When the new API later needs storage PHP never had:
 4. `database_per_tenant`: run the same migration set on each tenant database. `shared_database` / `single`: once.
 
 A new table owned only by the API is fine (prefix or a clearly new name). Do not invent `tenant_id` on legacy tables until PHP is gone from them.
+
+## 8. Sidik jari (desktop)
+
+Leave `SDP-Biometrik` as it is. Do not port capture into 8082. Do not convert the WinForms host to Linux/macOS.
+
+Officers enroll in `SDP.Registration.exe` (IE WebBrowser + Neurotec + `window.external`), which loads PHP `/biometricregistrasi`. Ubah on 8082 may keep daktil text and show existing photos. After a scan, reload the React page.
+
+The Java applet on `viewEdit` is dead. Do not revive it.
