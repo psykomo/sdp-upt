@@ -5,6 +5,8 @@ How to port a slice: [`PORTING.md`](PORTING.md).
 
 This is a deploy decision, not a slice. Do not implement a proxy or open 8081 to browsers unless a later task says so.
 
+Proposed next path (not implemented): [`SPA-PROXY.md`](SPA-PROXY.md) — drop Node SSR, static SPA, same-origin `/api` behind Caddy (dev) or Apache/nginx (UPT).
+
 ## What runs at the UPT
 
 8082 sits **on the UPT**, not at Pusat. A cut-over UPT therefore runs:

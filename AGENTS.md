@@ -48,5 +48,6 @@ Not lazy about: understanding the legacy page, the blast radius of a change, inp
 | Last slice to copy | whatever `docs/PORTING-PROGRESS.md` lists as done |
 | React Router skill | `sdp-frontend-reactrouter8/.agents/skills/react-router/SKILL.md` |
 | UPT runtime / 8081 rule | `docs/UPT-RUNTIME.md` |
+| SPA + proxy (proposed) | `docs/SPA-PROXY.md` |
 
 When the user pastes a `127.0.0.1:8080` URL, that is the next slice. Follow `docs/PORTING.md`. Update `docs/PORTING-PROGRESS.md` when it is done.
