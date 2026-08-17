@@ -69,6 +69,8 @@ New API-only tables use the same pattern. Do not split “legacy = repository, n
 
 ## 4. Frontend
 
+This app is React Router Framework Mode. Before changing routes, loaders, or actions, read [`../sdp-frontend-reactrouter8/.agents/skills/react-router/SKILL.md`](../sdp-frontend-reactrouter8/.agents/skills/react-router/SKILL.md), then `references/framework-mode.md`.
+
 - Route inside `app-layout` in `app/routes.ts`
 - Loader: `requireToken` then `apiGet` (pass `request`)
 - `<Link>` to ported screens. `<a href>` to leftover legacy (cetak: `target="_blank"`)

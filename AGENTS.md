@@ -29,6 +29,7 @@ Read the task and the code it touches. Trace the real flow end to end, then clim
 - Cut over only the finished action. Unported buttons stay on 8080.
 - Distinct `?legacy=1` key per cut-over URL. Empty frontend base URL means skip redirect.
 - Extend the existing UI tokens. Do not restyle the shell.
+- When editing `sdp-frontend-reactrouter8`, read `sdp-frontend-reactrouter8/.agents/skills/react-router/SKILL.md` first (Framework Mode), then `references/framework-mode.md`.
 - Do not edit tracked `__config.php` / `__database.php`. Local wrappers and `.env` are fine.
 - Fewest files. Deletion over addition. No new dependency if it can be avoided.
 - Commit only when asked.
@@ -43,5 +44,6 @@ Not lazy about: understanding the legacy page, input validation at trust boundar
 | How to port a slice | `docs/PORTING.md` |
 | What is already cut over | `docs/PORTING-PROGRESS.md` |
 | Last slice to copy | whatever `docs/PORTING-PROGRESS.md` lists as done |
+| React Router skill | `sdp-frontend-reactrouter8/.agents/skills/react-router/SKILL.md` |
 
 When the user pastes a `127.0.0.1:8080` URL, that is the next slice. Follow `docs/PORTING.md`. Update `docs/PORTING-PROGRESS.md` when it is done.
