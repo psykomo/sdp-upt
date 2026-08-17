@@ -16,6 +16,8 @@ Stop at the first rung that holds:
 
 Read the task and the code it touches. Trace the real flow end to end, then climb.
 
+After a change, name the blast radius before you stop: every screen, route, and leftover 8080 link that reads or navigates to what you touched. Verify those paths the way an officer would (the click, not only a typed URL). A loader redirect, cutover, or shared query must not be checked only on the document request you edited.
+
 ## Rules
 
 - Pemasyarakatan domain modules use Indonesian names (`Identitas`, not `Identity`). Keep `Auth`, `Lookup`, and `Shared` as technical modules.
@@ -34,7 +36,7 @@ Read the task and the code it touches. Trace the real flow end to end, then clim
 - Fewest files. Deletion over addition. No new dependency if it can be avoided.
 - Commit only when asked.
 
-Not lazy about: understanding the legacy page, input validation at trust boundaries, permission checks, anything that can lose or leak data.
+Not lazy about: understanding the legacy page, the blast radius of a change, input validation at trust boundaries, permission checks, anything that can lose or leak data.
 
 ## Where things live
 
