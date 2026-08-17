@@ -2,7 +2,8 @@
 
 Standing agent rules: [`AGENTS.md`](AGENTS.md).  
 Porting playbook (one slice at a time): [`docs/PORTING.md`](docs/PORTING.md).  
-What is already cut over: [`docs/PORTING-PROGRESS.md`](docs/PORTING-PROGRESS.md).
+What is already cut over: [`docs/PORTING-PROGRESS.md`](docs/PORTING-PROGRESS.md).  
+UPT runtime and the 8081 rule: [`docs/UPT-RUNTIME.md`](docs/UPT-RUNTIME.md).
 
 We will port legacy codebases from this project: 
 

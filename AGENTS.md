@@ -23,7 +23,7 @@ After a change, name the blast radius before you stop: every screen, route, and 
 - Pemasyarakatan domain modules use Indonesian names (`Identitas`, not `Identity`). Keep `Auth`, `Lookup`, and `Shared` as technical modules.
 - One action per slice (search, lihat, ubah, hapus, tambah, cetak). Not a whole controller. Not a whole menu.
 - Same MariaDB as legacy. Do not redesign tables while PHP still uses them. Schema changes are additive CI4 migrations only; never rename or drop a column PHP still reads.
-- Browser never calls the API. Node loaders/actions fetch the local API.
+- Browser never calls the API. Node loaders/actions fetch the local API. Why, and when that could change: [`docs/UPT-RUNTIME.md`](docs/UPT-RUNTIME.md).
 - Do not invent a second auth. JWT handover already exists. Use it.
 - Reuse RBAC, dates, lookups, origins, envelope. Do not reimplement `cekSecurity` or `getDeskripsi`.
 - Persistence is a repository (query builder), not a CodeIgniter `Model`. SQL does not live in services.
@@ -47,5 +47,6 @@ Not lazy about: understanding the legacy page, the blast radius of a change, inp
 | What is already cut over | `docs/PORTING-PROGRESS.md` |
 | Last slice to copy | whatever `docs/PORTING-PROGRESS.md` lists as done |
 | React Router skill | `sdp-frontend-reactrouter8/.agents/skills/react-router/SKILL.md` |
+| UPT runtime / 8081 rule | `docs/UPT-RUNTIME.md` |
 
 When the user pastes a `127.0.0.1:8080` URL, that is the next slice. Follow `docs/PORTING.md`. Update `docs/PORTING-PROGRESS.md` when it is done.

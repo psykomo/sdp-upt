@@ -27,6 +27,8 @@ Login: `admin` / `admin`. Logs: `.run/`.
 
 Node `API_BASE_URL` stays `http://127.0.0.1:8081` even when the browser is on a public host.
 
+8082 runs **at the UPT**, not Pusat. Why the browser must not call 8081, and a later same-origin-proxy option: [UPT-RUNTIME.md](UPT-RUNTIME.md).
+
 ## 1. Name the slice
 
 From the live URL:
