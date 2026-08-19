@@ -28,13 +28,13 @@ The API will use the exact database engine and database structure as the legacy 
 
 The database is currently running in orbstack sdp-mariadb.
 
-The API will support:
+The API will support (see [`docs/TENANCY.md`](docs/TENANCY.md)):
 
-- 1 tenant 1 database in 1 db server
+- 1 tenant 1 database in 1 db server (`single` — current UPT box)
 
-- Multi tenants, each tenant has its own database inside one shared db server. 
+- Multi tenants, each tenant has its own database inside one shared db server (`database_per_tenant` — UPT 1 → `upt_1`, UPT 2 → `upt_2`)
 
-- Multi tenants single database single db server.
+- Multi tenants single database single db server (`shared_database`)
 
 
 The API will have modular monolith architecture. It should be easy to maintain, easy to develop and easy to extend.  We could adopt DDD architecture but it should be alot more relax and more pragmatic.

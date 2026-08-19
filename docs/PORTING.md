@@ -68,7 +68,7 @@ New API-only tables use the same pattern. Do not split “legacy = repository, n
 - `DeskripsiLookup`, `DateFormat`, `PublicOrigins` for labels, dates, `links.*`
 - Ported `links` → `frontendBase()`. Unported `links` → `legacyBase()`.
 - Media: prefix stored paths with `legacyBase()`
-- Writes: `UnitOfWork::transactional()` (and `nested()` inside a parent)
+- Writes: `UnitOfWork::transactional()` (inner calls join the parent; CI4 only commits the outermost)
 
 ## 4. Frontend
 
@@ -127,7 +127,7 @@ When the new API later needs storage PHP never had:
 1. Additive only while any PHP path still reads or writes that table: `CREATE TABLE`, `ADD COLUMN` nullable (or with a default). No rename, no drop, no type change that would break CI2.
 2. Put the change in `sdp-api-ci4/app/Database/Migrations`. Run `php spark migrate`. Do not `ALTER` inside a controller (legacy does that; we will not).
 3. Expand / contract if meaning must change: add the new column, dual-write, switch reads, drop the old column only after that table is fully off 8080.
-4. `database_per_tenant`: run the same migration set on each tenant database. `shared_database` / `single`: once.
+4. `database_per_tenant`: run the same migration set on each tenant database (`upt_1`, `upt_2`, …). `shared_database` / `single`: once. See [`TENANCY.md`](TENANCY.md).
 
 A new table owned only by the API is fine (prefix or a clearly new name). Do not invent `tenant_id` on legacy tables until PHP is gone from them.
 

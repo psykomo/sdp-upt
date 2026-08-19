@@ -9,6 +9,7 @@ This repo holds workspace docs and run scripts only. Clone the three apps into `
 - How to port one slice: [`docs/PORTING.md`](docs/PORTING.md)
 - What is already ported: [`docs/PORTING-PROGRESS.md`](docs/PORTING-PROGRESS.md)
 - UPT runtime and the 8081 rule: [`docs/UPT-RUNTIME.md`](docs/UPT-RUNTIME.md)
+- Tenancy / one MariaDB, many UPT schemas: [`docs/TENANCY.md`](docs/TENANCY.md)
 - SPA + proxy: [`docs/SPA-PROXY.md`](docs/SPA-PROXY.md)
 
 ```bash
