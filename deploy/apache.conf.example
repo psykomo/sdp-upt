@@ -1,0 +1,78 @@
+# UPT Apache: two PHP versions, three listeners.
+#   :8080           legacy CI2  → PHP 7.4 FPM
+#   127.0.0.1:8081  CI4 API     → PHP 8.x FPM
+#   :8082           SPA         → no PHP
+#
+# Needs: mod_proxy, mod_proxy_http, mod_proxy_fcgi, mod_rewrite
+#
+# Replace:
+#   LEGACY_ROOT     — 102sdp/sdp
+#   API_PUBLIC      — sdp-api-ci4/public
+#   ROOT            — sdp-frontend-reactrouter8/build/client
+#   PHP74_FPM_SOCK  — /run/php/php7.4-fpm-sdp-legacy.sock
+#   PHP8_FPM_SOCK   — /run/php/php8.3-fpm-sdp-api.sock
+#
+# Pool file: php-fpm-pools.conf.example
+# Never put PHP74_FPM_SOCK on :8081 or PHP8_FPM_SOCK on :8080.
+
+# --- Legacy CI2: PHP 7.4 ----------------------------------------------------
+
+Listen 8080
+
+<VirtualHost *:8080>
+	DocumentRoot LEGACY_ROOT
+	DirectoryIndex index.php
+
+	<Directory LEGACY_ROOT>
+		Require all granted
+		AllowOverride All
+		Options +FollowSymLinks -Indexes
+	</Directory>
+
+	<FilesMatch \.php$>
+		SetHandler "proxy:unix:PHP74_FPM_SOCK|fcgi://localhost"
+	</FilesMatch>
+</VirtualHost>
+
+# --- CI4 API: PHP 8.x, localhost only ---------------------------------------
+# Officers never hit this port. :8082 proxies /api here.
+
+Listen 127.0.0.1:8081
+
+<VirtualHost 127.0.0.1:8081>
+	DocumentRoot API_PUBLIC
+	DirectoryIndex index.php
+
+	<Directory API_PUBLIC>
+		Require local
+		AllowOverride All
+		Options +FollowSymLinks -Indexes
+	</Directory>
+
+	<FilesMatch \.php$>
+		SetHandler "proxy:unix:PHP8_FPM_SOCK|fcgi://localhost"
+	</FilesMatch>
+</VirtualHost>
+
+# --- SPA: static files + /api → 127.0.0.1:8081 ------------------------------
+
+Listen 8082
+
+<VirtualHost *:8082>
+	DocumentRoot ROOT
+	DirectoryIndex index.html
+
+	ProxyPreserveHost Off
+	ProxyPass /api http://127.0.0.1:8081/api
+	ProxyPassReverse /api http://127.0.0.1:8081/api
+
+	<Directory ROOT>
+		Require all granted
+		AllowOverride None
+		FallbackResource /index.html
+	</Directory>
+
+	<Location /api>
+		FallbackResource disabled
+	</Location>
+</VirtualHost>

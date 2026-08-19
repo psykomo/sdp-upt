@@ -1,11 +1,13 @@
 #!/bin/zsh
 # Stop the local SDP 4.0 stack, or one app.
+# Frontend is Caddy on :8082 (not Node). API is spark on :8081.
+# Does not stop OrbStack, MariaDB, or other containers (e.g. Adminer on :8080).
 #
 #   ./stop-sdp.sh              # all three
 #   ./stop-sdp.sh all
 #   ./stop-sdp.sh legacy
 #   ./stop-sdp.sh api
-#   ./stop-sdp.sh frontend
+#   ./stop-sdp.sh frontend     # stop Caddy on :8082
 #   ./stop-sdp.sh api frontend
 
 set -euo pipefail
@@ -23,7 +25,7 @@ Usage:
   ./stop-sdp.sh all             Same as above
   ./stop-sdp.sh legacy          Stop only http://127.0.0.1:8080
   ./stop-sdp.sh api             Stop only http://127.0.0.1:8081
-  ./stop-sdp.sh frontend        Stop only http://127.0.0.1:8082
+  ./stop-sdp.sh frontend        Stop Caddy on http://127.0.0.1:8082
   ./stop-sdp.sh api frontend    Stop more than one
   ./stop-sdp.sh status          Show which ports are in use
 EOF

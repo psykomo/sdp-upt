@@ -8,13 +8,21 @@ FRONTEND_DIR="$ROOT_DIR/sdp-frontend-reactrouter8"
 
 LEGACY_PHP="/opt/homebrew/opt/php@7.4/bin/php"
 HOST="127.0.0.1"
+# Officer-facing bind (legacy + SPA). API stays on loopback, like UPT.
+OFFICER_BIND="${OFFICER_BIND:-0.0.0.0}"
+API_BIND="${API_BIND:-127.0.0.1}"
 DB_CONTAINER="sdp-mariadb"
+DB_PORT=3307
 
 LEGACY_PORT=8080
 API_PORT=8081
 FRONTEND_PORT=8082
 
 APP_ORDER=(legacy api frontend)
+
+lan_ip() {
+	ipconfig getifaddr en0 2>/dev/null || ipconfig getifaddr en1 2>/dev/null || true
+}
 
 port_for_app() {
 	case "$1" in
@@ -48,19 +56,54 @@ describe_port() {
 	lsof -nP -iTCP:"$port" -sTCP:LISTEN 2>/dev/null | awk 'NR==1 || NR>1 {print}'
 }
 
-# Kill listeners and the spark/npm wrapper that would hop to the next port.
+pid_command() {
+	ps -o command= -p "$1" 2>/dev/null || true
+}
+
+# Only php/spark/caddy/npm that we started. Never OrbStack, docker-proxy, or Adminer.
+is_sdp_process() {
+	local pid="$1"
+	local cmd
+	cmd="$(pid_command "$pid")"
+	[[ -n "$cmd" ]] || return 1
+
+	case "$cmd" in
+		*[Oo]rb[Ss]tack*|*"docker-proxy"*|*"com.docker"*|*"Docker Desktop"*|*adminer*)
+			return 1
+			;;
+	esac
+
+	[[ "$cmd" == *'php -S '* ]] && return 0
+	[[ "$cmd" == *'spark serve'* ]] && return 0
+	[[ "$cmd" == *php* && "$cmd" == *"$API_DIR"* ]] && return 0
+	[[ "$cmd" == *php* && "$cmd" == *"$LEGACY_DIR"* ]] && return 0
+	[[ "$cmd" == *caddy*'--config'* ]] && return 0
+	[[ "$cmd" == *caddy*' run'* ]] && return 0
+	[[ "$cmd" == *'react-router'* ]] && return 0
+	[[ "$cmd" == 'npm run'* || "$cmd" == npm\ * ]] && return 0
+	return 1
+}
+
+sdp_pids_on_port() {
+	local port="$1"
+	local pid
+	for pid in $(port_pids "$port"); do
+		if is_sdp_process "$pid"; then
+			print -r -- "$pid"
+		fi
+	done
+}
+
+# Kill SDP listeners and the spark/npm wrapper that would hop to the next port.
 collect_kill_pids() {
 	local port="$1"
-	local pid ppid cmd
+	local pid ppid
 	local -a pids=()
-	for pid in $(port_pids "$port"); do
+	for pid in $(sdp_pids_on_port "$port"); do
 		pids+=("$pid")
 		ppid="$(ps -o ppid= -p "$pid" 2>/dev/null | tr -d ' ')"
-		if [[ -n "$ppid" && "$ppid" != 0 && "$ppid" != 1 ]]; then
-			cmd="$(ps -o command= -p "$ppid" 2>/dev/null || true)"
-			if [[ "$cmd" == *'spark serve'* || "$cmd" == *'react-router'* || "$cmd" == 'npm run'* || "$cmd" == npm\ * ]]; then
-				pids+=("$ppid")
-			fi
+		if [[ -n "$ppid" && "$ppid" != 0 && "$ppid" != 1 ]] && is_sdp_process "$ppid"; then
+			pids+=("$ppid")
 		fi
 	done
 	printf '%s\n' "${pids[@]}" | awk 'NF && !seen[$0]++'
@@ -117,9 +160,10 @@ stop_named() {
 	local port="$2"
 	local pid
 	local stopped=0
+	local leftover
 
 	if pid="$(read_pid "$name" 2>/dev/null)"; then
-		if pid_alive "$pid"; then
+		if pid_alive "$pid" && is_sdp_process "$pid"; then
 			kill "$pid" 2>/dev/null || true
 			sleep 0.2
 			pid_alive "$pid" && kill -9 "$pid" 2>/dev/null || true
@@ -128,7 +172,8 @@ stop_named() {
 		rm -f "$RUN_DIR/$name.pid"
 	fi
 
-	if ! port_free "$port"; then
+	leftover="$(sdp_pids_on_port "$port")"
+	if [[ -n "$leftover" ]]; then
 		kill_port "$port"
 		stopped=1
 	fi
@@ -137,6 +182,11 @@ stop_named() {
 		echo "Stopped $name (port $port)."
 	else
 		echo "$name (port $port) was already stopped."
+	fi
+
+	if ! port_free "$port"; then
+		echo "Port $port is still in use (not an SDP process — left running):" >&2
+		describe_port "$port" >&2
 	fi
 }
 

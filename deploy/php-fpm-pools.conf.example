@@ -1,0 +1,36 @@
+# Two PHP versions on one UPT box. Two FPM pools. Do not point both vhosts
+# at the same socket.
+#
+# Install:
+#   PHP 7.4  — legacy CI2 on :8080
+#   PHP 8.x  — CI4 API on 127.0.0.1:8081
+#
+# Drop each pool into that version's pool.d (names vary by distro):
+#   /etc/php/7.4/fpm/pool.d/sdp-legacy.conf
+#   /etc/php/8.3/fpm/pool.d/sdp-api.conf
+#
+# Then wire the sockets in apache.conf.example / nginx.conf.example.
+
+; --- PHP 7.4 — legacy CI2 only ----------------------------------------------
+
+[sdp-legacy]
+user = www-data
+group = www-data
+listen = /run/php/php7.4-fpm-sdp-legacy.sock
+listen.owner = www-data
+listen.group = www-data
+pm = ondemand
+pm.max_children = 20
+; php_admin_value[disable_functions] =  ; leave as the 7.4 package default
+
+; --- PHP 8.x — CI4 API only -------------------------------------------------
+; This pool must be started by php8.x-fpm, not php7.4-fpm.
+
+[sdp-api]
+user = www-data
+group = www-data
+listen = /run/php/php8.3-fpm-sdp-api.sock
+listen.owner = www-data
+listen.group = www-data
+pm = ondemand
+pm.max_children = 20

@@ -1,8 +1,6 @@
-# SPA + swappable proxy (proposed)
+# SPA + swappable proxy
 
-Status: **proposed — not implemented.** Current UPT still uses Node SSR on 8082. See [`UPT-RUNTIME.md`](UPT-RUNTIME.md) for what runs today.
-
-To continue: implement this file. Do not start from a session `plan.md`.
+Status: **implemented.** See [`UPT-RUNTIME.md`](UPT-RUNTIME.md) for what runs at the UPT.
 
 ---
 
@@ -78,9 +76,10 @@ Ship **examples**, not one blessed binary:
 
 | File | Who uses it |
 |---|---|
-| `deploy/Caddyfile` | Local `./start-sdp.sh frontend` |
-| `deploy/nginx.conf.example` | UPT nginx |
-| `deploy/apache.conf.example` | UPT Apache |
+| `deploy/Caddyfile` | Local `./start-sdp.sh frontend` (API is still `spark serve`) |
+| `deploy/nginx.conf.example` | UPT: :8080 PHP 7.4, localhost :8081 PHP 8.x, :8082 SPA |
+| `deploy/apache.conf.example` | Same split |
+| `deploy/php-fpm-pools.conf.example` | Two FPM pools / two sockets |
 
 No Caddy-only headers, modules, or `handle_path` tricks the others cannot copy.
 

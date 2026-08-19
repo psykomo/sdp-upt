@@ -1,0 +1,19 @@
+{
+	admin off
+}
+
+http://:{$FRONTEND_PORT:8082} {
+	# 0.0.0.0 in the site address is a Host match, not a bind. Use bind.
+	bind {$OFFICER_BIND:0.0.0.0}
+
+	handle /api/* {
+		reverse_proxy 127.0.0.1:{$API_PORT:8081}
+	}
+
+	handle {
+		root * {$FRONTEND_CLIENT}
+		encode gzip
+		try_files {path} /index.html
+		file_server
+	}
+}

@@ -1,0 +1,80 @@
+# UPT nginx: two PHP versions, three listeners.
+#   :8080           legacy CI2  → PHP 7.4 FPM
+#   127.0.0.1:8081  CI4 API     → PHP 8.x FPM
+#   :8082           SPA         → no PHP
+#
+# Replace:
+#   LEGACY_ROOT     — 102sdp/sdp
+#   API_PUBLIC      — sdp-api-ci4/public
+#   ROOT            — sdp-frontend-reactrouter8/build/client
+#   PHP74_FPM_SOCK  — /run/php/php7.4-fpm-sdp-legacy.sock
+#   PHP8_FPM_SOCK   — /run/php/php8.3-fpm-sdp-api.sock
+#
+# Pool file: php-fpm-pools.conf.example
+# Never put PHP74_FPM_SOCK on :8081 or PHP8_FPM_SOCK on :8080.
+
+# --- Legacy CI2: PHP 7.4 ----------------------------------------------------
+
+server {
+	listen 8080;
+	server_name _;
+
+	root LEGACY_ROOT;
+	index index.php;
+
+	location / {
+		try_files $uri $uri/ /index.php?$query_string;
+	}
+
+	location ~ \.php$ {
+		include fastcgi_params;
+		fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+		fastcgi_pass unix:PHP74_FPM_SOCK;
+	}
+}
+
+# --- CI4 API: PHP 8.x, localhost only ---------------------------------------
+# Officers never hit this port. :8082 proxies /api here.
+
+server {
+	listen 127.0.0.1:8081;
+	server_name _;
+
+	root API_PUBLIC;
+	index index.php;
+
+	location / {
+		try_files $uri $uri/ /index.php?$query_string;
+	}
+
+	location ~ \.php$ {
+		include fastcgi_params;
+		fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+		fastcgi_pass unix:PHP8_FPM_SOCK;
+	}
+}
+
+# --- SPA: static files + /api → 127.0.0.1:8081 ------------------------------
+
+server {
+	listen 8082;
+	server_name _;
+
+	root ROOT;
+	index index.html;
+
+	location /api/ {
+		proxy_pass http://127.0.0.1:8081;
+		proxy_http_version 1.1;
+		proxy_set_header Cookie $http_cookie;
+		proxy_set_header Authorization $http_authorization;
+		proxy_set_header X-SDP-Public-Host $http_x_sdp_public_host;
+		proxy_set_header X-SDP-Supervisor-Grant $http_x_sdp_supervisor_grant;
+		proxy_set_header Content-Type $content_type;
+		proxy_pass_header Set-Cookie;
+	}
+
+	location / {
+		try_files $uri /index.html;
+	}
+}

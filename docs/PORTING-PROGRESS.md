@@ -19,6 +19,8 @@ Per-slice rollback (no DB): UPT admin at http://127.0.0.1:8080/CutoverRollback w
 
 Auth, JWT handover, public-host origins, lookups (`agama`, `pendidikan`, `kelamin`, `kewarganegaraan`), and the Identitas chrome are in place. Do not rebuild them.
 
+Frontend runtime: static SPA on :8082 behind Caddy (local) / Apache or nginx (UPT). CI4 sets httpOnly `sdp_token`. Hapus supervisor grant is `sessionStorage` for 10 minutes. Copy `clientLoader` / `clientAction` from the last Identitas route.
+
 ## Identitas — still legacy
 
 These still open `http://127.0.0.1:8080`. Port next unless the user names a different menu.
@@ -44,7 +46,7 @@ Pick the next **menu** from the live legacy sidebar (logged in on 8080), then on
 
 ## Do not regress
 
-- Frontend Node must keep `API_BASE_URL=http://127.0.0.1:8081`
+- Frontend is a static SPA on :8082. `/api` is proxied to :8081. Do not open 8081 to officer PCs.
 - Identitas visual language in `sdp-frontend-reactrouter8/app/app.css`
 - Local-only `102sdp/system/application/config/config.php` (leave `__config.php` alone)
 - `?legacy=1` escape hatch on every cut-over URL

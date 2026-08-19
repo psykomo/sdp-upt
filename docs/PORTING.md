@@ -11,10 +11,11 @@ This is the procedure for one action. It is not Identitas-specific. Copy the las
 |---|---|---|
 | Legacy (CI2, PHP 7.4) | `102sdp/` | http://127.0.0.1:8080 |
 | API (CI4, latest PHP) | `sdp-api-ci4/` | http://127.0.0.1:8081 |
-| Frontend (React Router 8) | `sdp-frontend-reactrouter8/` | http://127.0.0.1:8082 |
+| Frontend (React Router 8 SPA) | `sdp-frontend-reactrouter8/` | http://127.0.0.1:8082 and LAN IP (`/api` → localhost :8081) |
 
 ```bash
-./start-sdp.sh              # all three
+./start-sdp.sh --dev        # porting: Vite HMR on :8082, no rebuild
+./start-sdp.sh              # UPT-shaped: build + Caddy on :8082
 ./start-sdp.sh api          # one of: legacy | api | frontend
 ./start-sdp.sh status
 ./stop-sdp.sh [app]
@@ -25,9 +26,9 @@ Login: `admin` / `admin`. Logs: `.run/`.
 
 `php spark serve` hops port if you only kill the child `php -S`. Use `./stop-sdp.sh api`.
 
-Node `API_BASE_URL` stays `http://127.0.0.1:8081` even when the browser is on a public host.
+The SPA calls same-origin `/api/v1`. Caddy (local) or Apache/nginx (UPT) forwards `/api` to `127.0.0.1:8081`. The browser never dials port 8081. Why: [UPT-RUNTIME.md](UPT-RUNTIME.md).
 
-8082 runs **at the UPT**, not Pusat. Why the browser must not call 8081, and a later same-origin-proxy option: [UPT-RUNTIME.md](UPT-RUNTIME.md).
+This app is React Router Framework Mode, **SPA** (`ssr: false`). Use `clientLoader` / `clientAction`. Do not add a server `loader` except on the root route at build time.
 
 ## 1. Name the slice
 
@@ -71,10 +72,10 @@ New API-only tables use the same pattern. Do not split “legacy = repository, n
 
 ## 4. Frontend
 
-This app is React Router Framework Mode. Before changing routes, loaders, or actions, read [`../sdp-frontend-reactrouter8/.agents/skills/react-router/SKILL.md`](../sdp-frontend-reactrouter8/.agents/skills/react-router/SKILL.md), then `references/framework-mode.md`.
+This app is React Router Framework Mode, SPA (`ssr: false`). Before changing routes, loaders, or actions, read [`../sdp-frontend-reactrouter8/.agents/skills/react-router/SKILL.md`](../sdp-frontend-reactrouter8/.agents/skills/react-router/SKILL.md), then `references/framework-mode.md` and `how-to/spa.md`.
 
 - Route inside `app-layout` in `app/routes.ts`
-- Loader: `requireToken` then `apiGet` (pass `request`)
+- `clientLoader`: `apiGet` (pass `request`; cookie is sent same-origin). 401 → `/login`
 - `<Link>` to ported screens. `<a href>` to leftover legacy (cetak: `target="_blank"`)
 - Reuse `app.css` tokens. Add CSS only for a missing pattern
 - `meta({ loaderData })` in React Router 8
@@ -104,7 +105,7 @@ Copy the last cutover helper rather than rewriting it.
 
 `prefer_legacy` check order: config `sdp_frontend_force_legacy` → Pusat file → local file → session `?legacy=1`. See [Rollback](#9-rollback).
 
-Public hosts (`sdp.caripasal.com`, `sdp-api…`, `sdp-front…`) already flow through `PublicOrigins` / `Sdp_sso` / `session.server.ts`. Never hard-code `127.0.0.1` into `links`.
+Public hosts (`sdp.caripasal.com`, `sdp-api…`, `sdp-front…`) already flow through `PublicOrigins` / `Sdp_sso` / `session.ts`. Never hard-code `127.0.0.1` into `links`.
 
 ## 6. Verify
 
