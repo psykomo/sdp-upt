@@ -69,6 +69,7 @@ New API-only tables use the same pattern. Do not split “legacy = repository, n
 - Ported `links` → `frontendBase()`. Unported `links` → `legacyBase()`.
 - Media: prefix stored paths with `legacyBase()`
 - Writes: `UnitOfWork::transactional()` (inner calls join the parent; CI4 only commits the outermost)
+- Services construct their own collaborators (`new IdentitasUpdateService()`). The controller does HTTP only.
 
 ## 4. Frontend
 
