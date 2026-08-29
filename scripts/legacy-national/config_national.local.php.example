@@ -1,0 +1,7 @@
+<?php
+// National legacy profile: http://127.0.0.1:9080/
+// Copy to 102sdp/system/application/config/config_national.local.php
+$host = isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : '127.0.0.1:9080';
+$config['base_url'] = 'http://' . $host . '/';
+// Optional: disable SPA cutover while testing national legacy only
+// $config['sdp_frontend_base_url'] = '';

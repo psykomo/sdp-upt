@@ -1,6 +1,6 @@
 # Porting progress
 
-Update this file at the end of every finished slice. Rules: [`../AGENTS.md`](../AGENTS.md). Procedure: [`PORTING.md`](PORTING.md). Tenancy / schema: [`TENANCY.md`](TENANCY.md).
+Update this file at the end of every finished slice. Rules: [`../AGENTS.md`](../AGENTS.md). Procedure: [`PORTING.md`](PORTING.md). Tenancy / schema: [`TENANCY.md`](TENANCY.md). Local sim: [`LOCAL-DATABASE.md`](LOCAL-DATABASE.md).
 
 Copy the last **Done** row. Do not rebuild auth, origins, lookups, or the UI shell.
 
@@ -14,8 +14,11 @@ Standalone Kanwil **deploy** is out of scope. Tag **behavior** on each finished 
 
 ```text
 Profiles: UPT ✅ | Pusat ⬜ | Kanwil ⬜
+Row scope: … (or N/A — no perkara/upt join)
 National notes: …
 ```
+
+- **Row scope** — how UPT / Kanwil / Pusat filtering is implemented (`perkara.ID_UPT`, `upt.KANWIL`, session keys, or N/A). Required for perkara-bound slices; see [`PORTING.md`](PORTING.md) §2 Row scope.
 
 - **UPT ✅** — verified on local `db_sdp` (required before cutover).
 - **Pusat ⬜** — verified on `sdp_pusat` with Pusat context when available.
@@ -28,10 +31,10 @@ Put profile lines in the **Notes** column or as bullets under the table row.
 
 | Slice | Legacy URL | New UI | API | Cutover key | Notes |
 |---|---|---|---|---|---|
-| Pencarian identitas | `/PencarianIdentitas` | `/identitas` | `GET /api/v1/identitas`, `GET /api/v1/identitas/export` | `PencarianIdentitas` | Grid + analisa. Menu `10`. Profiles: UPT ✅ \| Pusat ⬜ \| Kanwil ⬜. National: shared `isPusat \|\| isKanwil` branch (`upt` join, Asal UPT via `isHq()`); no `upt_session` / `kanwil_session` filter. |
-| Lihat identitas | `/ManajemenIdentitas/lihat/{noin}` | `/identitas/:nomorInduk` | `GET /api/v1/identitas/{noin}` | `ManajemenIdentitas` | Read-only. Dukcapil / KTP panels skipped. Profiles: UPT ✅ \| Pusat ⬜ \| Kanwil ⬜. National gap: mutasi photo path fallback (`isPusat \|\| isKanwil`) not ported. |
-| Ubah identitas | `/ManajemenIdentitas/viewEdit/{noin}` | `/identitas/:nomorInduk/ubah` | `GET /api/v1/identitas/{noin}/form`, `PUT /api/v1/identitas/{noin}` | `ManajemenIdentitasUbah` | Writes biodata/alamat/pekerjaan/keluarga/fisik/foto. Ambil Foto is `getUserMedia` on the ubah form (same PUT). Dual password stays on PHP before redirect. Scanner sidik jari, dokumen, Dukcapil/KTP still legacy. Profiles: UPT ✅ \| Pusat ⬜ \| Kanwil ⬜. |
-| Hapus identitas | `/ManajemenIdentitas/viewDelete/{noin}` | `/identitas/:nomorInduk/hapus` | `POST /api/v1/auth/supervisor`, `DELETE /api/v1/identitas/{noin}` | `ManajemenIdentitasHapus` | Supervisor dual password on 8082 (always, like PHP `viewDelete`). Grant required on DELETE. Refuses if open `perkara`. `?legacy=1` still uses PHP `LoginDP`. Profiles: UPT ✅ \| Pusat ⬜ \| Kanwil ⬜. |
+| Pencarian identitas | `/PencarianIdentitas` | `/identitas` | `GET /api/v1/identitas`, `GET /api/v1/identitas/export` | `PencarianIdentitas` | Grid + analisa. Menu `10`. Profiles: UPT ✅ \| Pusat ⬜ \| Kanwil ⬜. Row scope: UPT `perkara.ID_UPT`; Kanwil `upt.KANWIL` (full wilayah); Pusat open. National: `upt` join for Asal UPT (`isHq()`); no `upt_session` / `kanwil_session` picker. |
+| Lihat identitas | `/ManajemenIdentitas/lihat/{noin}` | `/identitas/:nomorInduk` | `GET /api/v1/identitas/{noin}` | `ManajemenIdentitas` | Read-only. Dukcapil / KTP panels skipped. Profiles: UPT ✅ \| Pusat ⬜ \| Kanwil ⬜. Row scope on all paths; 403 cross-scope. National gap: mutasi photo path fallback (`isPusat \|\| isKanwil`) not ported. |
+| Ubah identitas | `/ManajemenIdentitas/viewEdit/{noin}` | `/identitas/:nomorInduk/ubah` | `GET /api/v1/identitas/{noin}/form`, `PUT /api/v1/identitas/{noin}` | `ManajemenIdentitasUbah` | Writes biodata/alamat/pekerjaan/keluarga/fisik/foto. Ambil Foto is `getUserMedia` on the ubah form (same PUT). Dual password stays on PHP before redirect. Scanner sidik jari, dokumen, Dukcapil/KTP still legacy. Profiles: UPT ✅ \| Pusat ⬜ \| Kanwil ⬜. Row scope; no AKSES002 mutasi read-only gate yet. |
+| Hapus identitas | `/ManajemenIdentitas/viewDelete/{noin}` | `/identitas/:nomorInduk/hapus` | `POST /api/v1/auth/supervisor`, `DELETE /api/v1/identitas/{noin}` | `ManajemenIdentitasHapus` | Supervisor dual password on 8082 (always, like PHP `viewDelete`). Grant required on DELETE. Refuses if open `perkara`. `?legacy=1` still uses PHP `LoginDP`. Profiles: UPT ✅ \| Pusat ⬜ \| Kanwil ⬜. Row scope on DELETE. |
 
 Auth, JWT handover, public-host origins, lookups (`agama`, `pendidikan`, `kelamin`, `kewarganegaraan`), and the Identitas chrome are in place. Do not rebuild them.
 

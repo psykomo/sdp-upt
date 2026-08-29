@@ -57,6 +57,6 @@ The **app** only knows same-origin `/api/v1`. It does not know Caddy, Apache, or
 |---|---|---|
 | API on the UPT | `127.0.0.1:8081` | Default while any menu is still on 8080. Local MariaDB, `tenancy.mode=single`. |
 | API at Pusat | Pusat private URL | Only after **100%** cutover (no 8080). Officer PCs that can reach Pusat should hit Pusat 8082 instead. |
-| Central MariaDB, one schema per UPT | Same API artifact | `tenancy.mode=database_per_tenant`. UPT 1 → `upt_1`, UPT 2 → `upt_2` on one server. |
+| Central MariaDB, one schema per UPT | Same API artifact | `tenancy.mode=database_per_tenant`. UPT 093 → `db093`, UPT 001 → `db001` on one server. |
 
 Tenant and MariaDB are API concerns. Do not fork the SPA. Modes: [`TENANCY.md`](TENANCY.md).

@@ -1,0 +1,4 @@
+<?php
+// National legacy profile: sdp_pusat on local OrbStack.
+// Copy to 102sdp/system/application/config/database_national.local.php
+$db['default']['database'] = 'sdp_pusat';

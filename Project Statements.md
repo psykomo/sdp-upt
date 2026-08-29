@@ -32,7 +32,7 @@ The API will support (see [`docs/TENANCY.md`](docs/TENANCY.md)):
 
 - 1 tenant 1 database in 1 db server (`single` — current UPT box)
 
-- Multi tenants, each tenant has its own database inside one shared db server (`database_per_tenant` — UPT 1 → `upt_1`, UPT 2 → `upt_2`)
+- Multi tenants, each tenant has its own database inside one shared db server (`database_per_tenant` — UPT 093 → `db093`, UPT 001 → `db001`)
 
 - Multi tenants single database single db server (`shared_database`)
 

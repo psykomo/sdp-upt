@@ -1,9 +1,10 @@
 # Tenancy and MariaDB
 
 Standing rules: [`../AGENTS.md`](../AGENTS.md).  
-Runtime profiles (UPT / Pusat / Kanwil **behavior**): [`PORTING.md`](PORTING.md) §2.  
+Runtime profiles (UPT / Pusat / Kanwil **behavior**) and **row scope**: [`PORTING.md`](PORTING.md) §2.  
 UPT process layout and the 8081 rule: [`UPT-RUNTIME.md`](UPT-RUNTIME.md).  
-Schema while PHP still shares tables: [`PORTING.md`](PORTING.md) §8.
+Schema while PHP still shares tables: [`PORTING.md`](PORTING.md) §8.  
+Local multi-schema setup: [`LOCAL-DATABASE.md`](LOCAL-DATABASE.md).
 
 The SPA does not know tenancy. One artifact. The API picks the MariaDB schema.
 
@@ -13,12 +14,13 @@ Porting touches **two independent axes**. [`PORTING.md`](PORTING.md) §2 covers 
 
 | Layer | Question | Mechanism | Examples |
 |---|---|---|---|
-| **Tenancy** | Which **schema** does this request connect to? | `tenancy.mode`, `TenantContext`, JWT `uptId` | `db_sdp`, `upt_093`, `sdp_pusat` |
+| **Tenancy** | Which **schema** does this request connect to? | `tenancy.mode`, `TenantContext`, JWT `uptId` | `db_sdp`, `db093`, `sdp_pusat` |
 | **Site profile** | Is this officer **UPT**, **Pusat**, or **Kanwil**? | `daftar_referensi` `001`, `SiteContextService`, JWT `isPusat` / `isKanwil` | Asal UPT column, `kanwil_session` filters, blocked menus |
 
 - **Tenancy** = which MariaDB **schema** the API connects to, and whether one schema is shared by all officers or split per UPT.
 - **Site profile** = flags and session scoping **inside** whatever schema is connected.
 - In **`shared_database`**, UPT, Kanwil, and Pusat officers all use the **same** database (e.g. `sdp_pusat`). They differ by **site profile** (`isPusat`, `isKanwil`, UPT), not by schema.
+- **Row scope** (which rows inside the schema): wire on every perkara-bound ported slice from day one — procedure in [`PORTING.md`](PORTING.md) §2 Row scope; Identitas reference: `IdentitasAccessService`.
 - Standalone Kanwil (own install and DB) is **not** used or planned. Kanwil in this repo means **Kanwil officer on the national / shared database**.
 
 Code references:
@@ -32,7 +34,7 @@ Code references:
 |---|---|---|---|---|
 | **UPT box** (local) | `single` | Local DB on the box (e.g. `db_sdp`) | That UPT only | UPT |
 | **National / consolidated** | `shared_database` | One shared schema (e.g. `sdp_pusat`) | UPT, Kanwil, and Pusat officers | UPT, Kanwil, or Pusat |
-| **Central MariaDB, one schema per UPT** | `database_per_tenant` | `upt_1`, `upt_093`, … on one host | UPT (per schema) | UPT (officer picks tenant at login) |
+| **Central MariaDB, one schema per UPT** | `database_per_tenant` | `db001`, `db093`, … on one host | UPT (per schema) | UPT (officer picks tenant at login) |
 
 National **Pusat** and **Kanwil** verification for a ported slice: same shared schema, different logins or roles — tag separately in [`PORTING-PROGRESS.md`](PORTING-PROGRESS.md). That is site profile, not a second database.
 
@@ -43,7 +45,7 @@ National **Pusat** and **Kanwil** verification for a ported slice: same shared s
 | Mode | MariaDB | Who uses it |
 |---|---|---|
 | `single` | One server, **one database**, one UPT-shaped dataset | **UPT box** — local install; schema holds that prison’s data only (e.g. `db_sdp`). |
-| `database_per_tenant` | One server, **one database per UPT** | Central host with `upt_1`, `upt_2`, … — each schema is a full copy; API switches schema per JWT `uptId`. |
+| `database_per_tenant` | One server, **one database per UPT** | Central host with `db001`, `db093`, … — legacy replica name `db` + `ID_UPT`; API switches schema per JWT `uptId`. |
 | `shared_database` | One server, **one database for everyone** | **UPT, Kanwil, and Pusat** officers all connect to the **same** schema (e.g. `sdp_pusat`). Rows from many UPTs live in one DB; scope in SQL/session (`perkara.ID_UPT`, `upt_session`, `kanwil_session`, `isPusat` / `isKanwil`). |
 
 Summary:
@@ -62,9 +64,9 @@ Project Statements called the middle row “multi tenants, each tenant has its o
 officer / proxy
     → CI4 API  (one process)
          → MariaDB host
-              ├─ upt_1
-              ├─ upt_2
-              └─ upt_…
+              ├─ db001
+              ├─ db093
+              └─ db…
 ```
 
 Each schema is a full SDP copy (same tables as legacy). PHP at a UPT, if still running, points at **that UPT’s** schema on this server — not at a second engine.
@@ -75,10 +77,10 @@ Env:
 
 ```
 tenancy.mode = database_per_tenant
-tenancy.databasePrefix = upt_
+tenancy.databasePrefix = db
 
 database.default.hostname = <central MariaDB>
-database.default.database = upt_1
+database.default.database = db093
 database.default.username = …
 database.default.password = …
 ```
@@ -89,9 +91,11 @@ database.default.password = …
 database = tenancy.databasePrefix + tenantId
 ```
 
-Default prefix `upt_`. Tenant `1` → `upt_1`. Tenant id is the UPT key sealed in the JWT (`uptId`, same meaning as `daftar_referensi` `ID_LOOKUP=001` on that schema). If real `ID_UPT` is `0501`, the schema is `upt_0501`.
+Default prefix `db` (legacy-aligned). Tenant `093` → `db093`. Tenant id is the UPT key sealed in the JWT (`uptId`, same meaning as `daftar_referensi` `ID_LOOKUP=001` on that schema). If real `ID_UPT` is `0501`, the schema is `db0501`.
 
-The app user must be granted on every `upt_*` schema it may select.
+The app user must be granted on every `db*` tenant schema it may select.
+
+Local simulation: [`LOCAL-DATABASE.md`](LOCAL-DATABASE.md).
 
 ### Who chooses the schema
 
@@ -151,11 +155,11 @@ database.default.username = …
 database.default.password = …
 ```
 
-`TenantContext::apply()` does **not** switch schemas in this mode. JWT `uptId` and `sharedDatabaseUptId()` (when implemented) scope **which rows** an UPT officer may see inside the shared schema. Kanwil scoping may use Kanwil session keys in repositories, matching legacy — not a separate database.
+`TenantContext::apply()` does **not** switch schemas in this mode. JWT `uptId` scopes **which rows** an UPT officer may see inside the shared schema. Kanwil scoping uses `upt.KANWIL` on JWT `uptId` (Kanwil code). Identitas implements this in `IdentitasAccessService`; other modules still need porting per slice.
 
-Implementation today: mode is recognized; row-level scoping is still a stub (`TenantContext::sharedDatabaseUptId()`). Port national slices with explicit filters where legacy uses `upt_session` / `kanwil_session`. Do not add `tenant_id` on legacy tables while PHP still reads them.
+Row-level scoping beyond tenancy mode: Identitas uses `IdentitasAccessService` (`perkara.ID_UPT` / `upt.KANWIL`). `TenantContext::sharedDatabaseUptId()` remains a stub for generic reuse. Do not add `tenant_id` on legacy tables while PHP still reads them.
 
-`SiteContextService::resolve()` still reads `001` after connect — empty → `isPusat`, Kanwil code → `isKanwil`, UPT officer context from login/session. Those flags go on the JWT; porting branches on them per [`PORTING.md`](PORTING.md) §2.
+`SiteContextService::resolve()` still reads `001` after connect — empty → `isPusat`, Kanwil code → `isKanwil`. On national `shared_database`, optional login `tenantId` / `uptId` sets UPT officer context (`isPusat=false`, JWT `uptId`) without switching schema — mirrors legacy `upt_session`. Those flags go on the JWT; porting branches on them per [`PORTING.md`](PORTING.md) §2.
 
 ## Porting and tenancy
 

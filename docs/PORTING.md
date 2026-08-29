@@ -89,7 +89,37 @@ Also check views if the controller delegates layout. Classify each branch: Pusat
 - Mirror legacy’s **exact** condition. Use `isHq()` only when legacy uses `isPusat || isKanwil` in that branch.
 - Frontend: Pusat/Kanwil-only columns and filters only when the API exposes them (e.g. `asalUpt`, filter params).
 
+### Row scope (wire on every perkara-bound slice)
+
+**Tenancy** picks the schema; **row scope** picks which rows inside that schema the officer may see. On `shared_database` (`sdp_pusat`), menu RBAC alone is not enough — officers share one DB. Wire row scope on **every ported slice** that lists or loads data tied to `perkara` / `upt`, even while you still verify on `db_sdp` (`single`). Same code path then survives the move to national; on UPT box the filter is usually redundant but safe.
+
+Branch on `CurrentUser` — **not** on `tenancy.mode`. Profile resolution order matters (JWT `uptId` means different things):
+
+| Profile | Condition | SQL scope |
+|---|---|---|
+| **Kanwil** | `isKanwil` + `uptId` set | `upt.KANWIL = uptId` (Kanwil **code** — all UPTs in wilayah) |
+| **UPT officer** | `!isPusat && !isKanwil` + `uptId` set | `perkara.ID_UPT = uptId` (one prison) |
+| **Pusat** | `isPusat` (not Kanwil) | No default row filter |
+
+**Implement (each slice)**
+
+- **By-key routes** (lihat, ubah form, PUT, DELETE): assert scope **before** load/write; out of scope → **403**; missing row → **404**.
+- **Search / export**: same scope in the list repository (`WHERE` or `EXISTS` on `perkara` / `upt`).
+- Grep legacy `upt_session` / `kanwil_session` — some screens filter in session; others (e.g. Identitas search) never did. On `shared_database` the API still needs scope even when legacy list SQL did not use session keys.
+- Entity-specific rules (e.g. Identitas “no active STA parent perkara → allow”) stay in that module — grep legacy before copying.
+
+**Reference implementation:** `sdp-upt-api/app/Modules/Identitas/Services/IdentitasAccessService.php` (copy shape per module until a shared helper exists).
+
 **Verify**
+
+- **UPT:** `db_sdp` — behavior unchanged; scope still runs.
+- **National UPT sim:** `sdp_pusat`, login with `tenantId` — own UPT OK; cross-UPT key → **403** on detail/ubah.
+- **Kanwil:** `kanwil_jambi` on `sdp_pusat` — rows under that Kanwil OK; other Kanwil → **403**.
+- **Pusat:** `admin` without `tenantId` — still sees all rows (no filter).
+
+Record row-scope behavior in [`PORTING-PROGRESS.md`](PORTING-PROGRESS.md) notes (see profile tags).
+
+**Verify** (profiles)
 
 - **UPT:** real row on local `db_sdp` — required before cutover.
 - **Pusat / Kanwil:** on `sdp_pusat` when available (separate logins or roles if you have them). If not available locally, ship UPT verify and record Pusat/Kanwil as ⬜ in [`PORTING-PROGRESS.md`](PORTING-PROGRESS.md).
@@ -98,7 +128,7 @@ Do not ship UPT-only behavior when legacy has a Pusat or Kanwil branch unless th
 
 **Slice prompt (paste with a 8080 URL)**
 
-> Port per `docs/PORTING.md`. Grep and port **UPT**, **Pusat** (`isPusat`), and **Kanwil** (`isKanwil`) behavior from legacy — mirror each branch exactly (`Pusat only`, `Kanwil only`, or `Pusat \|\| Kanwil`). Standalone Kanwil deploy is out of scope. Same routes; branch in API/services. Verify on UPT; tag Pusat and Kanwil in `PORTING-PROGRESS.md`.
+> Port per `docs/PORTING.md`. Grep and port **UPT**, **Pusat** (`isPusat`), and **Kanwil** (`isKanwil`) behavior from legacy — mirror each branch exactly (`Pusat only`, `Kanwil only`, or `Pusat \|\| Kanwil`). Standalone Kanwil deploy is out of scope. Same routes; branch in API/services. **Wire row scope** on perkara-bound slices (§2 Row scope). Verify on UPT; tag Pusat and Kanwil in `PORTING-PROGRESS.md`.
 
 ## 3. Inspect the live page
 
@@ -129,6 +159,7 @@ New API-only tables use the same pattern. Do not split “legacy = repository, n
 - Media: prefix stored paths with `legacyBase()`
 - Writes: `UnitOfWork::transactional()` (inner calls join the parent; CI4 only commits the outermost)
 - Services construct their own collaborators (`new IdentitasUpdateService()`). The controller does HTTP only.
+- **Row scope** on perkara-bound slices: assert on by-key routes, filter on search/export — see §2 Row scope. Copy `IdentitasAccessService` until a shared helper exists.
 
 ## 5. Frontend
 
@@ -171,6 +202,7 @@ Public hosts (`sdp.caripasal.com`, `sdp-api…`, `sdp-front…`) already flow th
 
 - Real row from this DB (UPT: `db_sdp`)
 - UPT / Pusat / Kanwil behavior per §2 (national verify on `sdp_pusat` when available)
+- Row scope: cross-profile 403 on national when applicable (§2 Row scope)
 - Old URL without `legacy=1` lands on the new page, still logged in
 - `?legacy=1` still shows PHP
 - 404 and no permission
@@ -188,7 +220,7 @@ When the new API later needs storage PHP never had:
 1. Additive only while any PHP path still reads or writes that table: `CREATE TABLE`, `ADD COLUMN` nullable (or with a default). No rename, no drop, no type change that would break CI2.
 2. Put the change in `sdp-upt-api/app/Database/Migrations`. Run `php spark migrate`. Do not `ALTER` inside a controller (legacy does that; we will not).
 3. Expand / contract if meaning must change: add the new column, dual-write, switch reads, drop the old column only after that table is fully off 8080.
-4. `database_per_tenant`: run the same migration set on each tenant database (`upt_1`, `upt_2`, …). `shared_database` / `single`: once. See [`TENANCY.md`](TENANCY.md).
+4. `database_per_tenant`: run the same migration set on each tenant database (`db001`, `db093`, …). `shared_database` / `single`: once. See [`TENANCY.md`](TENANCY.md).
 
 A new table owned only by the API is fine (prefix or a clearly new name). Do not invent `tenant_id` on legacy tables until PHP is gone from them.
 
