@@ -10,8 +10,8 @@ This is the procedure for one action. It is not Identitas-specific. Copy the las
 | App | Folder | Local URL |
 |---|---|---|
 | Legacy (CI2, PHP 7.4) | `102sdp/` | http://127.0.0.1:8080 |
-| API (CI4, latest PHP) | `sdp-api-ci4/` | http://127.0.0.1:8081 |
-| Frontend (React Router 8 SPA) | `sdp-frontend-reactrouter8/` | http://127.0.0.1:8082 and LAN IP (`/api` → localhost :8081) |
+| API (CI4, latest PHP) | `sdp-upt-api/` | http://127.0.0.1:8081 |
+| Frontend (React Router 8 SPA) | `sdp-upt-frontend/` | http://127.0.0.1:8082 and LAN IP (`/api` → localhost :8081) |
 
 ```bash
 ./start-sdp.sh --dev        # porting: Vite HMR on :8082, no rebuild
@@ -60,7 +60,7 @@ New API-only tables use the same pattern. Do not split “legacy = repository, n
 
 - One repository per module aggregate (`IdentitasRepository` for `identitas` plus its sidik jari / kemiripan / log writes). A dedicated search repository is fine when the list query is a different shape.
 - Lookups stay in `DeskripsiLookup` / the Lookup module. Do not re-query `daftar_referensi` inside a domain service.
-- Module under `sdp-api-ci4/app/Modules/<Domain>/` (Indonesian name for a pemasyarakatan process: `Identitas`, not `Identity`)
+- Module under `sdp-upt-api/app/Modules/<Domain>/` (Indonesian name for a pemasyarakatan process: `Identitas`, not `Identity`)
 - Route in `api/v1`, behind `jwt` and `menu:<id>`
 - Static paths before `(:segment)`
 - Envelope `{ ok, data }` / `{ ok, false, message }`
@@ -73,14 +73,14 @@ New API-only tables use the same pattern. Do not split “legacy = repository, n
 
 ## 4. Frontend
 
-This app is React Router Framework Mode, SPA (`ssr: false`). Before changing routes, loaders, or actions, read [`../sdp-frontend-reactrouter8/.agents/skills/react-router/SKILL.md`](../sdp-frontend-reactrouter8/.agents/skills/react-router/SKILL.md), then `references/framework-mode.md` and `how-to/spa.md`.
+This app is React Router Framework Mode, SPA (`ssr: false`). Before changing routes, loaders, or actions, read [`../sdp-upt-frontend/.agents/skills/react-router/SKILL.md`](../sdp-upt-frontend/.agents/skills/react-router/SKILL.md), then `references/framework-mode.md` and `how-to/spa.md`.
 
 - Route inside `app-layout` in `app/routes.ts`
 - `clientLoader`: `apiGet` (pass `request`; cookie is sent same-origin). 401 → `/login`
 - `<Link>` to ported screens. `<a href>` to leftover legacy (cetak: `target="_blank"`)
 - Reuse `app.css` tokens. Add CSS only for a missing pattern
 - `meta({ loaderData })` in React Router 8
-- `npm run typecheck` in `sdp-frontend-reactrouter8`
+- `npm run typecheck` in `sdp-upt-frontend`
 - Update already-ported lists so the new action no longer points at 8080
 
 ## 5. Cut over
@@ -126,7 +126,7 @@ The API and PHP share one MariaDB. Porting a slice does **not** mean a migration
 When the new API later needs storage PHP never had:
 
 1. Additive only while any PHP path still reads or writes that table: `CREATE TABLE`, `ADD COLUMN` nullable (or with a default). No rename, no drop, no type change that would break CI2.
-2. Put the change in `sdp-api-ci4/app/Database/Migrations`. Run `php spark migrate`. Do not `ALTER` inside a controller (legacy does that; we will not).
+2. Put the change in `sdp-upt-api/app/Database/Migrations`. Run `php spark migrate`. Do not `ALTER` inside a controller (legacy does that; we will not).
 3. Expand / contract if meaning must change: add the new column, dual-write, switch reads, drop the old column only after that table is fully off 8080.
 4. `database_per_tenant`: run the same migration set on each tenant database (`upt_1`, `upt_2`, …). `shared_database` / `single`: once. See [`TENANCY.md`](TENANCY.md).
 

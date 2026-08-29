@@ -52,7 +52,7 @@ PHP `Sdp_sso` handover is unchanged (token still in the query). `/auth/legacy` b
 
 ## Frontend (Framework SPA)
 
-Follow `sdp-frontend-reactrouter8/.agents/skills/react-router/SKILL.md` and installed `docs/how-to/spa.md`.
+Follow `sdp-upt-frontend/.agents/skills/react-router/SKILL.md` and installed `docs/how-to/spa.md`.
 
 - `react-router.config.ts`: `ssr: false`.
 - Root: `HydrateFallback` (existing empty-state tokens). Root `loader` only if needed at **build** time — no auth/DB there.
@@ -69,7 +69,7 @@ Follow `sdp-frontend-reactrouter8/.agents/skills/react-router/SKILL.md` and inst
 2. `/api/*` → `127.0.0.1:8081` with the path unchanged (`/api/v1/identitas` stays `/api/v1/identitas` on CI4).
 3. Forward `Cookie`, `Authorization`, `X-SDP-Public-Host`, `X-SDP-Supervisor-Grant`, `Content-Type`.
 4. Forward upstream `Set-Cookie` to the browser without rewriting `Path` or `Domain`.
-5. All other paths: files from `sdp-frontend-reactrouter8/build/client`; missing path → `index.html` (SPA).
+5. All other paths: files from `sdp-upt-frontend/build/client`; missing path → `index.html` (SPA).
 6. Do not listen on 8081 for officer PCs.
 
 Ship **examples**, not one blessed binary:

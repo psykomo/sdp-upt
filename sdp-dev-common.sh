@@ -3,8 +3,8 @@
 
 RUN_DIR="$ROOT_DIR/.run"
 LEGACY_DIR="$ROOT_DIR/102sdp"
-API_DIR="$ROOT_DIR/sdp-api-ci4"
-FRONTEND_DIR="$ROOT_DIR/sdp-frontend-reactrouter8"
+API_DIR="$ROOT_DIR/sdp-upt-api"
+FRONTEND_DIR="$ROOT_DIR/sdp-upt-frontend"
 
 LEGACY_PHP="/opt/homebrew/opt/php@7.4/bin/php"
 HOST="127.0.0.1"

@@ -7,12 +7,12 @@ UPT runtime and the 8081 rule: [`docs/UPT-RUNTIME.md`](docs/UPT-RUNTIME.md).
 
 We will port legacy codebases from this project: 
 
-/Users/hap/Documents/dev/sdp-4.0/102sdp
+/Users/hap/Documents/dev/sdp-upt/102sdp
 
 But focus on these 2 folders: 
 
-/Users/hap/Documents/dev/sdp-4.0/102sdp/sdp
-/Users/hap/Documents/dev/sdp-4.0/102sdp/system
+/Users/hap/Documents/dev/sdp-upt/102sdp/sdp
+/Users/hap/Documents/dev/sdp-upt/102sdp/system
 
 We can also access the dev server at:
 http://127.0.0.1:8080
@@ -22,7 +22,7 @@ use ego-browser skill to browse the dev server.
 
 
 The new codebases will be in form of API (API-fication), and will be built in this folder:
-/Users/hap/Documents/dev/sdp-4.0/sdp-api-ci4
+/Users/hap/Documents/dev/sdp-upt/sdp-upt-api
 
 The API will use the exact database engine and database structure as the legacy codebases.
 
@@ -46,7 +46,7 @@ The port will be done per module (strangler fig pattern).
 I do not have yet a good porting strategy, but maybe we could start porting one page or one menu at a time from the legacy app.
 
 For every page/menu that we are porting, we build the same structure but in more modern UI inside this folder:
-/Users/hap/Documents/dev/sdp-4.0/sdp-frontend-reactrouter8
+/Users/hap/Documents/dev/sdp-upt/sdp-upt-frontend
 
 When one whole page/menu including all its features has been finished developed, we cutover the old page/menu by redirecting to the new page/menu in the new frontend.
 

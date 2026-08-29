@@ -3,8 +3,8 @@
 
 # Separate remotes — do not add as gitlinks
 /102sdp/
-/sdp-api-ci4/
-/sdp-frontend-reactrouter8/
+/sdp-upt-api/
+/sdp-upt-frontend/
 
 # Client desktop biometric suite (own source, not this repo)
 /SDP-Biometrik/

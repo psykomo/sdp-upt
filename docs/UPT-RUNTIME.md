@@ -17,7 +17,7 @@ A cut-over UPT therefore runs:
 | CI4 API | 8081 | JWT API. Listen on localhost. |
 | Apache / nginx (Caddy locally) | 8082 | Static SPA + `/api` → `127.0.0.1:8081` |
 
-There is **no Node process** on the UPT. Pusat (or `./start-sdp.sh frontend`) builds `sdp-frontend-reactrouter8/build/client`. The proxy serves those files.
+There is **no Node process** on the UPT. Pusat (or `./start-sdp.sh frontend`) builds `sdp-upt-frontend/build/client`. The proxy serves those files.
 
 php-fpm for legacy (PHP 7.4, :8080) and CI4 (PHP 8.x, `127.0.0.1:8081`). Do not ship `spark serve` or `php -S` on site. Do not add Redis, Node cluster, or a second frontend process.
 

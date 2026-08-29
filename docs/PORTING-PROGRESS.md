@@ -47,7 +47,7 @@ Pick the next **menu** from the live legacy sidebar (logged in on 8080), then on
 ## Do not regress
 
 - Frontend is a static SPA on :8082. `/api` is proxied to :8081. Do not open 8081 to officer PCs.
-- Identitas visual language in `sdp-frontend-reactrouter8/app/app.css`
+- Identitas visual language in `sdp-upt-frontend/app/app.css`
 - Local-only `102sdp/system/application/config/config.php` (leave `__config.php` alone)
 - `?legacy=1` escape hatch on every cut-over URL
 - Per-slice rollback files `sdp_cutover.local.php` / `sdp_cutover.pusat.php` (not MariaDB); admin at `/CutoverRollback`

@@ -7,8 +7,8 @@
 #
 # Replace:
 #   LEGACY_ROOT     — 102sdp/sdp
-#   API_PUBLIC      — sdp-api-ci4/public
-#   ROOT            — sdp-frontend-reactrouter8/build/client
+#   API_PUBLIC      — sdp-upt-api/public
+#   ROOT            — sdp-upt-frontend/build/client
 #   PHP74_FPM_SOCK  — /run/php/php7.4-fpm-sdp-legacy.sock
 #   PHP8_FPM_SOCK   — /run/php/php8.3-fpm-sdp-api.sock
 #
