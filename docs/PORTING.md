@@ -41,13 +41,72 @@ From the live URL:
 
 Map: URL → PHP → SQL → UI → leftover actions.
 
-## 2. Inspect the live page
+## 2. Runtime profiles (UPT / Pusat / Kanwil)
+
+**Deploy** (where the app runs) and **behavior** (what legacy branches on) are not the same thing.
+
+**Standalone Kanwil** (own server, own DB, `is_transisi_sdp_kanwil=TRUE`) is out of scope — not used and not planned.
+
+### Deploy (two targets)
+
+| Deploy | DB | `daftar_referensi` `001` |
+|---|---|---|
+| **UPT box** | Local schema (`db_sdp` on the box) | UPT `ID_UPT` |
+| **National app** | `sdp_pusat` | Empty = Pusat boot; Kanwil code = Kanwil officer on the same national app |
+
+Tenancy for each deploy: [`TENANCY.md`](TENANCY.md). National uses `shared_database` — UPT, Kanwil, and Pusat share one schema (e.g. `sdp_pusat`); they differ by **site profile** (`isPusat` / `isKanwil`), not by database.
+
+### Behavior (grep three flags per slice)
+
+| Behavior | Session flag | Typical runtime |
+|---|---|---|
+| **UPT** | neither Pusat nor Kanwil | UPT box |
+| **Pusat** | `isPusat` | National app |
+| **Kanwil** | `isKanwil` | National app (scoped Kanwil; not a separate install) |
+
+Legacy does **not** fork URLs per profile. Same controller paths (`PencarianIdentitas`, `ManajemenIdentitas`, …). Differences are branches in PHP: extra columns, `upt` joins, session scoping (`upt_session`, `kanwil_session`), blocked actions, upload/photo paths.
+
+Legacy patterns vary by slice — do not assume one “HQ” branch:
+
+- `isPusat` only — Pusat-only screens or blocks
+- `isKanwil` only (often `elseif`) — Kanwil-only paths
+- `isPusat || isKanwil` — shared national list behavior (e.g. Identitas Asal UPT column)
+- `isKanwil && !is_transisi_sdp_kanwil` — merged Kanwil on national (still relevant without standalone Kanwil)
+
+**Before you code**
+
+```bash
+rg -n 'isPusat|isKanwil|upt_session|kanwil_session' \
+  102sdp/system/application/controllers/<Controller>.php
+```
+
+Also check views if the controller delegates layout. Classify each branch: Pusat-only, Kanwil-only, or combined. Note columns, SQL joins, filters, permission blocks, media paths.
+
+**Implement**
+
+- Same API route and SPA route for every profile. Branch in service or repository — not `/pusat/…` or a second module.
+- API: `SiteContextService` (boot from `001`) and `CurrentUser` (`isPusat`, `isKanwil` separately).
+- Mirror legacy’s **exact** condition. Use `isHq()` only when legacy uses `isPusat || isKanwil` in that branch.
+- Frontend: Pusat/Kanwil-only columns and filters only when the API exposes them (e.g. `asalUpt`, filter params).
+
+**Verify**
+
+- **UPT:** real row on local `db_sdp` — required before cutover.
+- **Pusat / Kanwil:** on `sdp_pusat` when available (separate logins or roles if you have them). If not available locally, ship UPT verify and record Pusat/Kanwil as ⬜ in [`PORTING-PROGRESS.md`](PORTING-PROGRESS.md).
+
+Do not ship UPT-only behavior when legacy has a Pusat or Kanwil branch unless the gap is written in progress notes.
+
+**Slice prompt (paste with a 8080 URL)**
+
+> Port per `docs/PORTING.md`. Grep and port **UPT**, **Pusat** (`isPusat`), and **Kanwil** (`isKanwil`) behavior from legacy — mirror each branch exactly (`Pusat only`, `Kanwil only`, or `Pusat \|\| Kanwil`). Standalone Kanwil deploy is out of scope. Same routes; branch in API/services. Verify on UPT; tag Pusat and Kanwil in `PORTING-PROGRESS.md`.
+
+## 3. Inspect the live page
 
 Log in on 8080. Use `?legacy=1` if that URL already cut over.
 
-Note fields, lookups and “lain-lain” overrides, buttons, files under `upload/…`, empty/404/permission behavior, Pusat vs UPT differences.
+Note fields, lookups and “lain-lain” overrides, buttons, files under `upload/…`, empty/404/permission behavior, and **UPT vs Pusat vs Kanwil** differences (see §2).
 
-## 3. API
+## 4. API
 
 Thin controller. Service owns mapping, validation, RBAC, and transactions.
 Repository owns SQL for that module’s tables. Create it on the first slice that touches those tables — not only when the query looks “hard”.
@@ -71,7 +130,7 @@ New API-only tables use the same pattern. Do not split “legacy = repository, n
 - Writes: `UnitOfWork::transactional()` (inner calls join the parent; CI4 only commits the outermost)
 - Services construct their own collaborators (`new IdentitasUpdateService()`). The controller does HTTP only.
 
-## 4. Frontend
+## 5. Frontend
 
 This app is React Router Framework Mode, SPA (`ssr: false`). Before changing routes, loaders, or actions, read [`../sdp-upt-frontend/.agents/skills/react-router/SKILL.md`](../sdp-upt-frontend/.agents/skills/react-router/SKILL.md), then `references/framework-mode.md` and `how-to/spa.md`.
 
@@ -83,7 +142,7 @@ This app is React Router Framework Mode, SPA (`ssr: false`). Before changing rou
 - `npm run typecheck` in `sdp-upt-frontend`
 - Update already-ported lists so the new action no longer points at 8080
 
-## 5. Cut over
+## 6. Cut over
 
 After `cekSecurity`:
 
@@ -104,22 +163,23 @@ Copy the last cutover helper rather than rewriting it.
 - Empty frontend base URL: skip redirect
 - Add the new key to `Sdp_sso::cutover_slices()` so UPT rollback can see it
 
-`prefer_legacy` check order: config `sdp_frontend_force_legacy` → Pusat file → local file → session `?legacy=1`. See [Rollback](#9-rollback).
+`prefer_legacy` check order: config `sdp_frontend_force_legacy` → Pusat file → local file → session `?legacy=1`. See [Rollback](#10-rollback).
 
 Public hosts (`sdp.caripasal.com`, `sdp-api…`, `sdp-front…`) already flow through `PublicOrigins` / `Sdp_sso` / `session.ts`. Never hard-code `127.0.0.1` into `links`.
 
-## 6. Verify
+## 7. Verify
 
-- Real row from this DB
+- Real row from this DB (UPT: `db_sdp`)
+- UPT / Pusat / Kanwil behavior per §2 (national verify on `sdp_pusat` when available)
 - Old URL without `legacy=1` lands on the new page, still logged in
 - `?legacy=1` still shows PHP
 - 404 and no permission
 - Unported buttons still open 8080
 - If tunnels are up, cutover goes to the public frontend host
 
-Then update `PORTING-PROGRESS.md`.
+Then update `PORTING-PROGRESS.md` (include profile tags — see progress file).
 
-## 7. Schema
+## 8. Schema
 
 The API and PHP share one MariaDB. Porting a slice does **not** mean a migration.
 
@@ -132,7 +192,7 @@ When the new API later needs storage PHP never had:
 
 A new table owned only by the API is fine (prefix or a clearly new name). Do not invent `tenant_id` on legacy tables until PHP is gone from them.
 
-## 8. Sidik jari (desktop)
+## 9. Sidik jari (desktop)
 
 Leave `SDP-Biometrik` as it is. Do not port capture into 8082. Do not convert the WinForms host to Linux/macOS.
 
@@ -140,7 +200,7 @@ Officers enroll in `SDP.Registration.exe` (IE WebBrowser + Neurotec + `window.ex
 
 The Java applet on `viewEdit` is dead. Do not revive it.
 
-## 9. Rollback
+## 10. Rollback
 
 No MariaDB change. PHP owns the switch so rollback still works when Node and CI4 are down.
 
