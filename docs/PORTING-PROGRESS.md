@@ -35,6 +35,7 @@ Put profile lines in the **Notes** column or as bullets under the table row.
 | Lihat identitas | `/ManajemenIdentitas/lihat/{noin}` | `/identitas/:nomorInduk` | `GET /api/v1/identitas/{noin}`, `GET /api/v1/identitas/{noin}/documents`, `GET /api/v1/documents/{id}/download`, `GET /api/v1/documents/{id}/view` | `ManajemenIdentitas` | Read-only. Dukcapil / KTP panels skipped. Profiles: UPT ✅ \| Pusat ⬜ \| Kanwil ⬜. Row scope on all paths; 403 cross-scope. National: mutasi photo path fallback via `IdentitasPhotoResolver` (`isHq()`). Dokumen lampiran tab on lihat (`Modules/Dokumen`). |
 | Ubah identitas | `/ManajemenIdentitas/viewEdit/{noin}` | `/identitas/:nomorInduk/ubah` | `GET /api/v1/identitas/{noin}/form`, `PUT /api/v1/identitas/{noin}`, `POST/PUT/DELETE /api/v1/identitas/{noin}/documents` + `/api/v1/documents/{id}` | `ManajemenIdentitasUbah` | Writes biodata/alamat/pekerjaan/keluarga/fisik/foto. Ambil Foto is `getUserMedia` on the ubah form (same PUT). Dual password stays on PHP before redirect. Scanner sidik jari, Dukcapil/KTP still legacy. Profiles: UPT ✅ \| Pusat ⬜ \| Kanwil ⬜. Row scope; AKSES002 locks tanggal lahir / kewarganegaraan / agama on form + PUT (`IdentitasSensitiveFieldService`). PDF dokumen upload/delete on dedicated tab; kemiripan add/remove UI wired to existing PUT `nomorIndukSimilar`. |
 | Hapus identitas | `/ManajemenIdentitas/viewDelete/{noin}` | `/identitas/:nomorInduk/hapus` | `POST /api/v1/auth/supervisor`, `DELETE /api/v1/identitas/{noin}` | `ManajemenIdentitasHapus` | Supervisor dual password on 8082 (always, like PHP `viewDelete`). Grant required on DELETE. Refuses if open `perkara`. `?legacy=1` still uses PHP `LoginDP`. Profiles: UPT ✅ \| Pusat ⬜ \| Kanwil ⬜. Row scope on DELETE. |
+| Tambah identitas | `/AddIdentitas` | `/identitas/baru` | `GET /api/v1/identitas/form`, `POST /api/v1/identitas` | `AddIdentitas` | Create only. Menu `10` write; HQ cannot create (`isHq()` + RBAC). `NOMOR_INDUK` = JWT `uptId`+Ymd+seq4 (not daftar_referensi `001` on national). Duplicate `validasiLokal` → 409 (NM_IBU matched to posted ayah — legacy quirk). BIN/BINTI on insert only. `KONSOLIDASI=0`. Shared `IdentitasWriteMapper` with ubah. Sidik jari capture / Dukcapil / dokumen-on-create / Registrasi session stay 8080. Profiles: UPT ✅ \| Pusat ⬜ \| Kanwil ⬜. Row scope: create prefix = JWT uptId. |
 
 Auth, JWT handover, public-host origins, lookups (`agama`, `pendidikan`, `kelamin`, `kewarganegaraan`), and the Identitas chrome are in place. Do not rebuild them.
 
@@ -59,7 +60,6 @@ These still open `http://127.0.0.1:8080`. Port next unless the user names a diff
 
 | Slice | Legacy URL | Suggested new UI | Suggested API |
 |---|---|---|---|
-| Tambah | `/AddIdentitas` | `/identitas/baru` | `POST /api/v1/identitas` |
 | Cetak identitas | `/LaporanIdentitas/cetak_identitas_napi/{noin}` | keep PDF on legacy until print is ported | — |
 | Cetak tahanan | `/LaporanIdentitas/cetak_identitas_tahanan/{noin}` | same | — |
 | Cetak sidik jari | `/DaftarSidikJari/cetak_sidikjari/{noin}` | same | — |
@@ -68,7 +68,7 @@ These still open `http://127.0.0.1:8080`. Port next unless the user names a diff
 | Verifikasi identitas ke Pusat | `/verifikasi_identitas_pusat` (menu `V02`) | separate menu; UPT-only; deferred | see known gaps |
 | Identitas Foto (Pusat listing) | `/Identitas_foto` (menu `IFO`) | keep on 8080 until usage confirmed | see known gaps |
 
-Tambah is the natural next Identitas slice.
+Cetak / biometrik / Dukcapil remain on 8080. Next Identitas work is optional (verifikasi / Identitas_foto) or the next live sidebar menu.
 
 ## After Identitas
 
@@ -76,7 +76,7 @@ Pick the next **menu** from the live legacy sidebar (logged in on 8080), then on
 
 | Menu | ID_MENU | Status |
 |---|---|---|
-| Manajemen Identitas | `10` | Search + lihat + ubah + hapus done |
+| Manajemen Identitas | `10` | Search + lihat + ubah + hapus + tambah done |
 
 ## Do not regress
 
