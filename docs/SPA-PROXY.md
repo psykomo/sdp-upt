@@ -32,34 +32,34 @@ CI4 keeps listening on localhost 8081 only. The proxy does not expose 8081.
 
 ## Auth (no second login)
 
-Today Node signs an httpOnly `sdp_token` cookie (React Router `createCookie`, not the raw JWT). The browser cannot send that to CI4, and SPA loaders cannot read httpOnly cookies to set `Authorization`.
+CI4 owns the session cookie. The SPA never signs cookies and does not need `SESSION_SECRET` / `API_BASE_URL`.
 
 Do **not** put the JWT in `localStorage`.
 
-Do this instead:
+Flow:
 
-1. CI4 `POST /auth/login` (and a small `POST /auth/cookie` for PHP handover) sets  
+1. CI4 `POST /auth/login` (and `POST /auth/cookie` for PHP handover) sets  
    `Set-Cookie: sdp_token=<raw JWT>; HttpOnly; Path=/; SameSite=Lax; Max-Age=28800`  
    (`Secure` only on HTTPS).
 2. The proxy forwards `Set-Cookie` as-is (default on Caddy / Apache / nginx). The cookie is stored for the **8082 host**.
 3. SPA `fetch('/api/v1/…', { credentials: 'same-origin' })`. The browser attaches the cookie. JS never reads the token.
 4. `JwtAuthFilter` accepts `Authorization: Bearer` **or** cookie `sdp_token`.
-5. Logout: SPA calls `POST /auth/logout` (new, tiny) that expires the cookie.
+5. Logout: SPA calls `POST /auth/logout`, which expires the cookie.
 
-Hapus supervisor grant stays a header (`X-SDP-Supervisor-Grant`), held in `sessionStorage` for 10 minutes — not a Node-signed cookie.
+Hapus supervisor grant is a header (`X-SDP-Supervisor-Grant`), held in `sessionStorage` for 10 minutes — not a signed cookie.
 
-PHP `Sdp_sso` handover is unchanged (token still in the query). `/auth/legacy` becomes a `clientLoader` that POSTs the token to `/api/v1/auth/cookie` then redirects.
+PHP `Sdp_sso` handover is unchanged (token still in the query). `/auth/legacy` is a `clientLoader` that POSTs the token to `/api/v1/auth/cookie` then redirects.
 
 ## Frontend (Framework SPA)
 
 Follow `sdp-upt-frontend/.agents/skills/react-router/SKILL.md` and installed `docs/how-to/spa.md`.
 
 - `react-router.config.ts`: `ssr: false`.
-- Root: `HydrateFallback` (existing empty-state tokens). Root `loader` only if needed at **build** time — no auth/DB there.
-- Every current `loader` / `action` becomes `clientLoader` / `clientAction` (SPA mode forbids other server loaders).
-- `session.server.ts` → `app/lib/session.ts`: `apiBase()` is `''` + `/api/v1`; no `process.env.API_BASE_URL` at runtime; `fileToPayload` without Node `Buffer`.
-- `requireToken`: `GET /api/v1/auth/me` with credentials; 401 → `/login`. Do not parse the cookie in JS.
-- Export CSV: `clientLoader` fetches `/api/v1/identitas/export` and returns a `Response` download (same as now, from the browser).
+- Root: `HydrateFallback` (existing empty-state tokens). No auth/DB in a root loader.
+- Data routes use `clientLoader` / `clientAction` (SPA mode forbids server loaders).
+- `app/lib/session.ts`: `apiBase()` is `''` so calls are same-origin `/api/v1/…`. Public tunnel hosts are constants in that file, not `.env`.
+- `requireToken` / `hasSession`: `GET /api/v1/auth/me` with credentials; 401 → `/login`. Do not parse the cookie in JS.
+- Export CSV: `clientLoader` fetches `/api/v1/identitas/export` and returns a `Response` download from the browser.
 
 `@react-router/serve` stays a **dev/build** dependency only. UPT does not run Node.
 
@@ -85,26 +85,22 @@ No Caddy-only headers, modules, or `handle_path` tricks the others cannot copy.
 
 Local `./start-sdp.sh frontend` runs Caddy after `npm run build`. Vite HMR is optional later. `./stop-sdp.sh frontend` stops Caddy on 8082.
 
-## Docs / rules (when implementing)
+## Docs / rules
 
-- `AGENTS.md`: replace “browser never calls the API” with: **browsers never reach port 8081**. Same-origin `/api` through the UPT proxy is required. Node SSR is not used at the UPT.
-- `docs/UPT-RUNTIME.md`: chosen path is SPA + proxy contract; Caddy locally; Apache/nginx at UPT. Keep “do not open 8081 + CORS”.
-- `docs/PORTING.md` stack table: frontend = static SPA on :8082 behind the proxy.
+Standing rules live in `AGENTS.md` and [`UPT-RUNTIME.md`](UPT-RUNTIME.md): browsers never reach port 8081; same-origin `/api` through the UPT proxy; Node SSR is not used at the UPT. Porting stack: static SPA on :8082 behind the proxy ([`PORTING.md`](PORTING.md)).
 
-## Blast radius
+## Blast radius (already cut over)
 
-| Surface | Change |
+| Surface | Behavior |
 |---|---|
-| All frontend route modules | `loader`/`action` → `client*` |
-| Login, logout, auth-legacy | Cookie via CI4, not `tokenCookie.serialize` |
-| Hapus grant | `sessionStorage` instead of signed cookie |
+| Frontend route modules | `clientLoader` / `clientAction` |
+| Login, logout, auth-legacy | Cookie via CI4 |
+| Hapus grant | `sessionStorage` + header |
 | CI4 Auth + JwtAuthFilter | Set-Cookie + cookie fallback + logout |
 | `start-sdp.sh` / `stop-sdp.sh` | Caddy locally |
 | `deploy/*.example` | Apache / nginx copies of the same contract |
-| Cutover PHP | None (still handover to 8082) |
-| MariaDB / Identitas SQL | None |
 
-Verify after: login, 8080→8082 handover still logged in, search/lihat/ubah/hapus (including supervisor grant), logout, `?legacy=1`, cetak still 8080, 8081 not reachable from the browser origin (only `/api` on 8082).
+Verify after changes: login, 8080→8082 handover still logged in, search/lihat/ubah/hapus (including supervisor grant), logout, `?legacy=1`, cetak still 8080, 8081 not reachable from the browser origin (only `/api` on 8082).
 
 ## Out of scope
 
