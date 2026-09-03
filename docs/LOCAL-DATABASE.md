@@ -80,11 +80,13 @@ Copy a template to `sdp-upt-api/.env` (not committed):
 | `sdp-upt-api/env.national` | `shared_database` | `sdp_pusat` |
 | `sdp-upt-api/env.tenant` | `database_per_tenant` | `db093` |
 
-Tenant mode also needs:
+After copy, set machine-local values the templates leave blank or placeholder:
 
-```
-tenancy.databasePrefix = db
-```
+- `jwt.secret` — required for login/JWT
+- `encryption.key` — required by CI4 (`php spark key:generate`, or copy from a working `.env`)
+- `legacy.root` — absolute path to the legacy tree that owns `upload/` (e.g. `…/102sdp/sdp`)
+
+`env.tenant` already sets `tenancy.databasePrefix = db`. Tunnel hosts (`public.*Host`) and `jwt.ttlHours` ship with the same defaults as a working `.env`.
 
 Restart API after switching: `./stop-sdp.sh api && ./start-sdp.sh api`.
 
@@ -175,7 +177,7 @@ export MARIADB_ROOT_PASSWORD='…'
 ./scripts/dev-mariadb-prod-sim.sh
 
 # 2. Switch API env and restart
-cp sdp-upt-api/env.national sdp-upt-api/.env   # add jwt.secret from backup
+cp sdp-upt-api/env.national sdp-upt-api/.env   # set jwt.secret, encryption.key, legacy.root
 ./stop-sdp.sh api && ./start-sdp.sh api
 
 # 3. Profile checks
