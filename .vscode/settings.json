@@ -3,6 +3,7 @@
   "git.scanRepositories": [
     "102sdp",
     "sdp-upt-api",
-    "sdp-upt-frontend"
+    "sdp-upt-frontend",
+    "sdp-pusat-legacy"
   ]
 }

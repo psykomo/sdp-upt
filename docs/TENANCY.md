@@ -8,6 +8,8 @@ Local multi-schema setup: [`LOCAL-DATABASE.md`](LOCAL-DATABASE.md).
 
 The SPA does not know tenancy. One artifact. The API picks the MariaDB schema.
 
+**Legacy source (production):** two trees — `102sdp` (UPT) and `sdp-pusat-legacy` (Kanwil/Pusat). **Ported deploy:** still two targets below, but **one** codebase. Porting procedure for merging both trees: [`PORTING.md`](PORTING.md) §2.
+
 ## Two layers (do not confuse them)
 
 Porting touches **two independent axes**. [`PORTING.md`](PORTING.md) §2 covers behavior; this file covers MariaDB.

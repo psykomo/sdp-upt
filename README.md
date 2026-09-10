@@ -1,8 +1,8 @@
 # SDP UPT
 
-Strangler-fig port of legacy SDP (`102sdp`) into a CI4 API and a React Router 8 UI. They run together.
+Strangler-fig port of legacy SDP into a CI4 API and a React Router 8 UI. Production still has **two** legacy trees (`102sdp` UPT, `sdp-pusat-legacy` Kanwil/Pusat); the ported end state is **one** API + SPA with two deploy targets.
 
-This repo holds workspace docs and run scripts only. Clone the three apps into `102sdp/`, `sdp-upt-api/`, and `sdp-upt-frontend/` — each has its own remote.
+This repo holds workspace docs and run scripts only. Clone the apps into `102sdp/`, `sdp-pusat-legacy/`, `sdp-upt-api/`, and `sdp-upt-frontend/` — each has its own remote.
 
 - Goals: [`Project Statements.md`](Project%20Statements.md)
 - Standing agent rules: [`AGENTS.md`](AGENTS.md)

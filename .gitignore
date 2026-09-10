@@ -3,6 +3,7 @@
 
 # Separate remotes — do not add as gitlinks
 /102sdp/
+/sdp-pusat-legacy/
 /sdp-upt-api/
 /sdp-upt-frontend/
 

@@ -34,7 +34,7 @@ After a change, name the blast radius before you stop: every screen, route, and 
 - When editing `sdp-upt-frontend`, read `sdp-upt-frontend/.agents/skills/react-router/SKILL.md` first (Framework Mode), then `references/framework-mode.md`.
 - Do not edit tracked `__config.php` / `__database.php`. Local wrappers and `.env` are fine.
 - Fewest files. Deletion over addition. No new dependency if it can be avoided.
-- **Runtime profiles:** Two **deploy** targets: **UPT box** (`db_sdp`) and **national app** (`sdp_pusat`). Tenancy vs site profile: [`docs/TENANCY.md`](docs/TENANCY.md). Standalone Kanwil (own install and DB) is not used and not planned. Three **behavior** profiles to grep and port per slice: **UPT**, **Pusat** (`isPusat`), **Kanwil** (`isKanwil` on national — not a separate server). Legacy often branches three ways (`isPusat` only, `isKanwil` only, or `isPusat || isKanwil`); mirror the **exact** condition — use `CurrentUser::isHq()` only when legacy combines Pusat and Kanwil. Same API and SPA routes (`SiteContextService`, `CurrentUser`). Verify UPT on `db_sdp` before cutover; tag Pusat and Kanwil separately in [`docs/PORTING-PROGRESS.md`](docs/PORTING-PROGRESS.md). Do not mark a slice done with undocumented national gaps. Procedure: [`docs/PORTING.md`](docs/PORTING.md) §2.
+- **Runtime profiles:** Production still ships **two legacy trees** — `102sdp/` (UPT) and `sdp-pusat-legacy/` (Kanwil/Pusat). Ported end state is **one** API + SPA with two **deploy** targets: **UPT box** (`db_sdp`) and **national app** (`sdp_pusat`). Per slice, read **both** legacy trees and merge behavior. Tenancy vs site profile: [`docs/TENANCY.md`](docs/TENANCY.md). Standalone Kanwil (own install and DB) is not used and not planned. Three **behavior** profiles to grep and port per slice: **UPT**, **Pusat** (`isPusat`), **Kanwil** (`isKanwil` on national — not a separate server). Legacy often branches three ways (`isPusat` only, `isKanwil` only, or `isPusat || isKanwil`); mirror the **exact** condition — use `CurrentUser::isHq()` only when legacy combines Pusat and Kanwil. Same API and SPA routes (`SiteContextService`, `CurrentUser`). Verify UPT on `db_sdp` before cutover; tag Pusat and Kanwil separately in [`docs/PORTING-PROGRESS.md`](docs/PORTING-PROGRESS.md). Do not mark a slice done with undocumented national gaps. Procedure: [`docs/PORTING.md`](docs/PORTING.md) §2.
 - **Row scope:** On every perkara-bound slice, wire profile-based row scope in the API (assert + search filter) from the first port — even on `db_sdp` — so `shared_database` cutover does not reopen finished slices. UPT → `perkara.ID_UPT`; Kanwil → `upt.KANWIL`; Pusat open. Copy [`IdentitasAccessService`](sdp-upt-api/app/Modules/Identitas/Services/IdentitasAccessService.php); procedure: [`docs/PORTING.md`](docs/PORTING.md) §2 Row scope.
 - Commit only when asked.
 
@@ -46,6 +46,8 @@ Not lazy about: understanding the legacy page, the blast radius of a change, inp
 |---|---|
 | Why | `Project Statements.md` |
 | How to port a slice | `docs/PORTING.md` |
+| Legacy UPT tree | `102sdp/` |
+| Legacy Kanwil/Pusat tree | `sdp-pusat-legacy/` |
 | What is already cut over | `docs/PORTING-PROGRESS.md` |
 | Last slice to copy | whatever `docs/PORTING-PROGRESS.md` lists as done |
 | React Router skill | `sdp-upt-frontend/.agents/skills/react-router/SKILL.md` |

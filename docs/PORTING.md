@@ -7,11 +7,14 @@ This is the procedure for one action. It is not Identitas-specific. Copy the las
 
 ## Stack
 
-| App | Folder | Local URL |
+| App | Folder | Local URL / role |
 |---|---|---|
-| Legacy (CI2, PHP 7.4) | `102sdp/` | http://127.0.0.1:8080 |
+| Legacy UPT (CI2, PHP 7.4) | `102sdp/` (`sdp/`, `system/`) | http://127.0.0.1:8080 — production UPT tree |
+| Legacy Kanwil/Pusat (CI2) | `sdp-pusat-legacy/` (`www/sdp_pusat/`, `system/`) | Reference only for national behavior (not wired to `start-sdp.sh` yet) |
 | API (CI4, latest PHP) | `sdp-upt-api/` | http://127.0.0.1:8081 |
 | Frontend (React Router 8 SPA) | `sdp-upt-frontend/` | http://127.0.0.1:8082 and LAN IP (`/api` → localhost :8081) |
+
+**Production today:** two legacy source trees (UPT vs Kanwil/Pusat). **Port target:** one API + one SPA, two deploy targets (`db_sdp` / `sdp_pusat`). Every slice must read **both** trees and merge behavior into that one codebase.
 
 ```bash
 ./start-sdp.sh --dev        # porting: Vite HMR on :8082, no rebuild
@@ -39,7 +42,7 @@ From the live URL:
 - Views, models, helpers, tables
 - What this slice will **not** include
 
-Map: URL → PHP → SQL → UI → leftover actions.
+Map: URL → PHP → SQL → UI → leftover actions. For PHP, open the matching controller/method in **both** `102sdp` and `sdp-pusat-legacy` (controller names usually match; bodies may diverge).
 
 ## 2. Runtime profiles (UPT / Pusat / Kanwil)
 
@@ -47,7 +50,16 @@ Map: URL → PHP → SQL → UI → leftover actions.
 
 **Standalone Kanwil** (own server, own DB, `is_transisi_sdp_kanwil=TRUE`) is out of scope — not used and not planned.
 
-### Deploy (two targets)
+### Two legacy trees → one ported codebase
+
+| Tree | Folder | What it is for |
+|---|---|---|
+| **UPT** | `102sdp/` | Production UPT box; local 8080; verify UPT cutover here |
+| **Kanwil/Pusat** | `sdp-pusat-legacy/` | Production national tree; source of truth for Pusat/Kanwil behavior |
+
+Do not port from `102sdp` alone and invent national gaps. Diff the same action in both trees. Controller/URL names are often shared (`PencarianIdentitas`, `ManajemenIdentitas`, …); implementation, SQL, session keys, and media paths may differ. Record meaningful diffs in [`PORTING-PROGRESS.md`](PORTING-PROGRESS.md) national notes. The ported API/SPA must cover **both** trees’ behavior via profile branches — not two modules and not a second SPA.
+
+### Deploy (two targets — ported end state)
 
 | Deploy | DB | `daftar_referensi` `001` |
 |---|---|---|
@@ -56,15 +68,15 @@ Map: URL → PHP → SQL → UI → leftover actions.
 
 Tenancy for each deploy: [`TENANCY.md`](TENANCY.md). National uses `shared_database` — UPT, Kanwil, and Pusat share one schema (e.g. `sdp_pusat`); they differ by **site profile** (`isPusat` / `isKanwil`), not by database.
 
-### Behavior (grep three flags per slice)
+### Behavior (grep three flags per slice — both trees)
 
-| Behavior | Session flag | Typical runtime |
-|---|---|---|
-| **UPT** | neither Pusat nor Kanwil | UPT box |
-| **Pusat** | `isPusat` | National app |
-| **Kanwil** | `isKanwil` | National app (scoped Kanwil; not a separate install) |
+| Behavior | Session flag | Typical runtime | Prefer reading |
+|---|---|---|---|
+| **UPT** | neither Pusat nor Kanwil | UPT box | `102sdp` |
+| **Pusat** | `isPusat` | National app | `sdp-pusat-legacy` |
+| **Kanwil** | `isKanwil` | National app (scoped Kanwil; not a separate install) | `sdp-pusat-legacy` |
 
-Legacy does **not** fork URLs per profile. Same controller paths (`PencarianIdentitas`, `ManajemenIdentitas`, …). Differences are branches in PHP: extra columns, `upt` joins, session scoping (`upt_session`, `kanwil_session`), blocked actions, upload/photo paths.
+Within each tree, differences are often PHP branches: extra columns, `upt` joins, session scoping (`upt_session`, `kanwil_session`), blocked actions, upload/photo paths. Across trees, the same branch may disagree — unify into one condition in the port; do not keep two source copies.
 
 Legacy patterns vary by slice — do not assume one “HQ” branch:
 
@@ -77,16 +89,17 @@ Legacy patterns vary by slice — do not assume one “HQ” branch:
 
 ```bash
 rg -n 'isPusat|isKanwil|upt_session|kanwil_session' \
-  102sdp/system/application/controllers/<Controller>.php
+  102sdp/system/application/controllers/<Controller>.php \
+  sdp-pusat-legacy/system/application/controllers/<Controller>.php
 ```
 
-Also check views if the controller delegates layout. Classify each branch: Pusat-only, Kanwil-only, or combined. Note columns, SQL joins, filters, permission blocks, media paths.
+Also check views in both trees if the controller delegates layout. Classify each branch: Pusat-only, Kanwil-only, or combined. Note columns, SQL joins, filters, permission blocks, media paths, and **tree-vs-tree** diffs.
 
 **Implement**
 
 - Same API route and SPA route for every profile. Branch in service or repository — not `/pusat/…` or a second module.
 - API: `SiteContextService` (boot from `001`) and `CurrentUser` (`isPusat`, `isKanwil` separately).
-- Mirror legacy’s **exact** condition. Use `isHq()` only when legacy uses `isPusat || isKanwil` in that branch.
+- Mirror the **merged** legacy condition (both trees). Use `isHq()` only when both trees (or the national tree for HQ-only paths) use `isPusat || isKanwil` in that branch.
 - Frontend: Pusat/Kanwil-only columns and filters only when the API exposes them (e.g. `asalUpt`, filter params).
 
 ### Row scope (wire on every perkara-bound slice)
@@ -128,13 +141,13 @@ Do not ship UPT-only behavior when legacy has a Pusat or Kanwil branch unless th
 
 **Slice prompt (paste with a 8080 URL)**
 
-> Port per `docs/PORTING.md`. Grep and port **UPT**, **Pusat** (`isPusat`), and **Kanwil** (`isKanwil`) behavior from legacy — mirror each branch exactly (`Pusat only`, `Kanwil only`, or `Pusat \|\| Kanwil`). Standalone Kanwil deploy is out of scope. Same routes; branch in API/services. **Wire row scope** on perkara-bound slices (§2 Row scope). Verify on UPT; tag Pusat and Kanwil in `PORTING-PROGRESS.md`.
+> Port per `docs/PORTING.md`. Read the slice in **both** `102sdp` and `sdp-pusat-legacy`. Grep and port **UPT**, **Pusat** (`isPusat`), and **Kanwil** (`isKanwil`) — mirror each branch exactly (`Pusat only`, `Kanwil only`, or `Pusat \|\| Kanwil`); unify tree diffs into one API/SPA. Standalone Kanwil deploy is out of scope. Same routes; branch in API/services. **Wire row scope** on perkara-bound slices (§2 Row scope). Verify on UPT; tag Pusat and Kanwil in `PORTING-PROGRESS.md`.
 
 ## 3. Inspect the live page
 
-Log in on 8080. Use `?legacy=1` if that URL already cut over.
+Log in on 8080 (UPT tree). Use `?legacy=1` if that URL already cut over.
 
-Note fields, lookups and “lain-lain” overrides, buttons, files under `upload/…`, empty/404/permission behavior, and **UPT vs Pusat vs Kanwil** differences (see §2).
+Note fields, lookups and “lain-lain” overrides, buttons, files under `upload/…`, empty/404/permission behavior, and **UPT vs Pusat vs Kanwil** differences (see §2). For national-only UI you cannot click locally yet, read `sdp-pusat-legacy` views/controllers as the second source of truth.
 
 ## 4. API
 

@@ -5,20 +5,20 @@ Porting playbook (one slice at a time): [`docs/PORTING.md`](docs/PORTING.md).
 What is already cut over: [`docs/PORTING-PROGRESS.md`](docs/PORTING-PROGRESS.md).  
 UPT runtime and the 8081 rule: [`docs/UPT-RUNTIME.md`](docs/UPT-RUNTIME.md).
 
-We will port legacy codebases from this project:
+We will port **two** production legacy trees into **one** API + SPA:
 
-`102sdp/`
+| Tree | Folder | Focus paths |
+|---|---|---|
+| UPT | `102sdp/` | `102sdp/sdp/`, `102sdp/system/` |
+| Kanwil/Pusat | `sdp-pusat-legacy/` | `sdp-pusat-legacy/www/sdp_pusat/`, `sdp-pusat-legacy/system/` |
 
-But focus on these 2 folders:
-
-`102sdp/sdp/`
-`102sdp/system/`
-
-We can also access the dev server at:
+Local UPT legacy (cutover / click-through) is at:
 http://127.0.0.1:8080
 username: admin
 password: admin
 use ego-browser skill to browse the dev server.
+
+When porting a slice, read the matching action in **both** trees and merge into one codebase (profile branches). Playbook: [`docs/PORTING.md`](docs/PORTING.md) §2.
 
 
 The new codebases will be in form of API (API-fication), and will be built in this folder:
@@ -50,7 +50,7 @@ For every page/menu that we are porting, we build the same structure but in more
 
 When one whole page/menu including all its features has been finished developed, we cutover the old page/menu by redirecting to the new page/menu in the new frontend.
 
-Threse 3 codebases, legacy, API and the new modern frontend will run together, side by side.
+Threse apps run together side by side for UPT strangler cutover: UPT legacy (`102sdp`), API, and modern frontend. National legacy (`sdp-pusat-legacy`) is the second behavior reference until national cutover is wired the same way.
 
 The authentication should be seamless betweeen these 3 apps. User will just login in the legacy app, and the user will be automatically also logged in the the new frontend and the API.
 

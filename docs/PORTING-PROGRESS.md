@@ -4,6 +4,8 @@ Update this file at the end of every finished slice. Rules: [`../AGENTS.md`](../
 
 Copy the last **Done** row. Do not rebuild auth, origins, lookups, or the UI shell.
 
+Every slice: read matching PHP in **`102sdp`** (UPT) and **`sdp-pusat-legacy`** (Kanwil/Pusat), merge into one API/SPA. Note tree-vs-tree diffs under national notes.
+
 When a slice is cut over, add its key to `Sdp_sso::cutover_slices()` in `102sdp/system/application/libraries/Sdp_sso.php` so `/CutoverRollback` can toggle it.
 
 Per-slice rollback (no DB): UPT admin at http://127.0.0.1:8080/CutoverRollback writes `sdp_cutover.local.php`. Pusat drops `sdp_cutover.pusat.php` via installer. Missing key = stay cut over. See `docs/PORTING.md` §10.
@@ -23,7 +25,7 @@ National notes: …
 - **UPT ✅** — verified on local `db_sdp` (required before cutover).
 - **Pusat ⬜** — verified on `sdp_pusat` with Pusat context when available.
 - **Kanwil ⬜** — verified on `sdp_pusat` with Kanwil context when available (Kanwil officer on national app, not standalone install).
-- **National notes** — which legacy branches apply (`isPusat` only, `isKanwil` only, `isPusat \|\| isKanwil`, `upt_session`, `kanwil_session`, columns, joins, media). If Pusat and Kanwil share one branch, say so. List gaps explicitly.
+- **National notes** — which legacy branches apply (`isPusat` only, `isKanwil` only, `isPusat \|\| isKanwil`, `upt_session`, `kanwil_session`, columns, joins, media). Cite **`102sdp` vs `sdp-pusat-legacy`** when they disagree. If Pusat and Kanwil share one branch, say so. List gaps explicitly.
 
 Put profile lines in the **Notes** column or as bullets under the table row.
 
