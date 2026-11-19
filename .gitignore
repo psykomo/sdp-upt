@@ -1,5 +1,6 @@
 .run/
 .DS_Store
+.tmp/
 
 # Separate remotes — do not add as gitlinks
 /102sdp/
