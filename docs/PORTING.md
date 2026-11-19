@@ -42,7 +42,7 @@ From the live URL:
 - Views, models, helpers, tables
 - What this slice will **not** include
 
-Map: URL → PHP → SQL → UI → leftover actions. For PHP, open the matching controller/method in **both** `102sdp` and `sdp-pusat-legacy` (controller names usually match; bodies may diverge).
+Map: URL → PHP → SQL → UI → leftover actions. For PHP, open the matching controller/method in **both** `102sdp` and `sdp-pusat-legacy` (controller names usually match; bodies may diverge). Check legacy drift (`./scripts/triage-legacy.sh`) at slice kickoff and again right before cutover ([`LEGACY-SYNC.md`](LEGACY-SYNC.md)).
 
 ## 2. Runtime profiles (UPT / Pusat / Kanwil)
 
@@ -222,7 +222,7 @@ Public hosts (`sdp.caripasal.com`, `sdp-api…`, `sdp-front…`) already flow th
 - Unported buttons still open 8080
 - If tunnels are up, cutover goes to the public frontend host
 
-Then update `PORTING-PROGRESS.md` (include profile tags — see progress file).
+Then update `PORTING-PROGRESS.md` (include profile tags — see progress file) and append this slice's legacy files, owned tables, and cutover URLs to `scripts/legacy-watch.conf` ([`LEGACY-SYNC.md`](LEGACY-SYNC.md)).
 
 ## 8. Schema
 

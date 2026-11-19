@@ -1,6 +1,6 @@
 # Porting progress
 
-Update this file at the end of every finished slice. Rules: [`../AGENTS.md`](../AGENTS.md). Procedure: [`PORTING.md`](PORTING.md). Tenancy / schema: [`TENANCY.md`](TENANCY.md). Local sim: [`LOCAL-DATABASE.md`](LOCAL-DATABASE.md).
+Update this file at the end of every finished slice. Rules: [`../AGENTS.md`](../AGENTS.md). Procedure: [`PORTING.md`](PORTING.md). Tenancy / schema: [`TENANCY.md`](TENANCY.md). Local sim: [`LOCAL-DATABASE.md`](LOCAL-DATABASE.md). Legacy sync: [`LEGACY-SYNC.md`](LEGACY-SYNC.md).
 
 Copy the last **Done** row. Do not rebuild auth, origins, lookups, or the UI shell.
 
