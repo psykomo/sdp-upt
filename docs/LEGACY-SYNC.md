@@ -11,16 +11,17 @@ Both legacy trees (`102sdp` and `sdp-pusat-legacy`) keep receiving updates while
 
 | Repo | Directory | Upstream ref | Local branch | Merge rule |
 |---|---|---|---|---|
-| `102sdp` (UPT) | `102sdp/` | `origin/staging` | `feat/modernisasi` | **Merge (`git merge origin/staging`), never rebase** |
+| `102sdp` (UPT) | `102sdp/` | `origin/staging` | `feat/modernisasi_sdp` | **Merge (`git merge origin/staging`), never rebase** |
 | `pusat` (Kanwil/Pusat) | `sdp-pusat-legacy/` | `origin/production` | `production` | Fast-forward `production` to `origin/production` until national cutover hooks exist |
 
 Single source of truth for watermarks, watched paths, owned tables, and cutover URLs: [`scripts/legacy-watch.conf`](../scripts/legacy-watch.conf).
 
 ### Merge discipline (`102sdp`)
 
-- **Always `git merge origin/staging` into `feat/modernisasi` — never rebase.** Branch history is shared (`caesar` / officer boxes), and merging scales cleanly as cutover hooks accumulate. `git diff origin/staging...feat/modernisasi` always shows pure cutover glue.
-- Keep `feat/modernisasi` pure cutover glue (`Sdp_sso`, `CutoverRollback`, 5-line redirect hooks right after `cekSecurity()`). Do not mix legacy business-logic edits into `feat/modernisasi`.
-- Once national cutover hooks are wired in `sdp-pusat-legacy`, follow the same `feat/modernisasi` + periodic `git merge origin/production` rule.
+- **Always `git merge origin/staging` into `feat/modernisasi_sdp` — never rebase.** Branch history is shared on `origin` with the team, and merging scales cleanly as cutover hooks accumulate. `git diff origin/staging...feat/modernisasi_sdp` always shows pure cutover glue.
+- Keep `feat/modernisasi_sdp` pure cutover glue (`Sdp_sso`, `CutoverRollback`, 5-line redirect hooks right after `cekSecurity()`). Do not mix legacy business-logic edits into `feat/modernisasi_sdp`.
+- Upstream `102sdp` intentionally omits `.gitignore`, so keep local runtime/config excludes in `102sdp/.git/info/exclude` rather than committing a `.gitignore`.
+- Once national cutover hooks are wired in `sdp-pusat-legacy`, follow the same `feat/modernisasi_sdp` + periodic `git merge origin/production` rule.
 
 ## Sync & triage procedure (periodic drops)
 
@@ -39,7 +40,7 @@ Single source of truth for watermarks, watched paths, owned tables, and cutover 
    | **2. Shared Core** | Auth, RBAC, `Login`, `MY_Controller`, `Menu`, shell layouts |
    | **3. Ported / In-Progress Slices** | Watched controllers, models, libraries, and views per slice |
    | **4. Indirect Hits** | Unported files whose diff queries an owned table or links to a cutover URL |
-   | **5. Cutover Conflict Preview** | Files touched by both `feat/modernisasi` and the incoming upstream drop |
+   | **5. Cutover Conflict Preview** | Files touched by both `feat/modernisasi_sdp` and the incoming upstream drop |
 
 3. **Disposition every Bucket 1–4 hit**
    - **Backport now** — business rule, validation, filter, field, or bugfix that affects parity on `:8082`.
@@ -48,7 +49,7 @@ Single source of truth for watermarks, watched paths, owned tables, and cutover 
    - **Temp rollback** — urgent production change in a cut-over slice before parity is ready; flip that single slice key back to PHP via `sdp_cutover.pusat.php` or `http://127.0.0.1:8080/CutoverRollback`.
 
 4. **Sync repos, local DB, and backports**
-   - Merge `origin/staging` into `102sdp` `feat/modernisasi`; fast-forward `sdp-pusat-legacy` `production` to `origin/production`.
+   - Merge `origin/staging` into `102sdp` `feat/modernisasi_sdp`; fast-forward `sdp-pusat-legacy` `production` to `origin/production`.
    - For `querybox/*.sql` updates on local `db_sdp`: prepend `SET SESSION sql_mode = 'NO_ENGINE_SUBSTITUTION';` when piping legacy SQL into OrbStack `sdp-mariadb` (local MariaDB runs `STRICT_TRANS_TABLES` while legacy scripts assume non-strict MariaDB 10.1). Apply new standalone idempotent files directly; for cumulative `*_dari_3.6.1...sql` files, extract and apply **only the incremental delta** after `db_sdp`'s current `VER2` (skipping `DROP/CREATE USER` and `mysql.proc` blocks). Re-run `./scripts/dev-mariadb-prod-sim.sh` when prod-sim schemas (`db093`, `db001`, `sdp_pusat`) also need the schema update.
    - Implement any **Backport now** items in `sdp-upt-api` / `sdp-upt-frontend`.
 
