@@ -163,7 +163,18 @@ New API-only tables use the same pattern. Do not split “legacy = repository, n
 - One repository per module aggregate (`IdentitasRepository` for `identitas` plus its sidik jari / kemiripan / log writes). A dedicated search repository is fine when the list query is a different shape.
 - Lookups stay in `DeskripsiLookup` / the Lookup module. Do not re-query `daftar_referensi` inside a domain service.
 - Module under `sdp-upt-api/app/Modules/<Domain>/` (Indonesian name for a pemasyarakatan process: `Identitas`, not `Identity`)
-- Route in `api/v1`, behind `jwt` and `menu:<id>[,<tipe>]` (register new menus in `App\Modules\Auth\Support\PortedMenuRegistry` so `/auth/me` and the SPA nav expose them automatically)
+- Route in `api/v1`, behind `jwt` and `menu:<id>[,<tipe>]`
+- Register every new top-level menu once in `sdp-upt-api/app/Modules/Auth/Support/PortedMenuRegistry.php` (`PortedMenuRegistry::all()`) so `/auth/me` (`access` + `menus`) and the SPA nav expose it automatically:
+  ```php
+  [
+      'id'    => '<ID_MENU>',   // legacy hak_akses.Id_Menu
+      'key'   => '<slug>',      // stable identifier
+      'label' => '<Label>',     // SPA nav label
+      'path'  => '/<route>',    // SPA route path
+      'icon'  => 'id-card',     // icon key mapped in app-layout.tsx
+      'tipe'  => 1,             // 1 = HQ read-only (master data), 0 = HQ writable; match menu:<id>[,<tipe>] and legacy cekSecurity($id_menu, $tipe)
+  ]
+  ```
 - Dual-password (`LoginDP`) flows: call `POST /api/v1/auth/supervisor` with `menuId`, `resourceKey`, and `action` (`AuthService::issueSupervisorGrant` / `readSupervisorGrant`)
 - Envelope `{ ok, data }` / `{ ok, false, message }`
 - `RbacService::accessFor` on the payload
@@ -179,6 +190,7 @@ New API-only tables use the same pattern. Do not split “legacy = repository, n
 This app is React Router Framework Mode, SPA (`ssr: false`). Before changing routes, loaders, or actions, read [`../sdp-upt-frontend/.agents/skills/react-router/SKILL.md`](../sdp-upt-frontend/.agents/skills/react-router/SKILL.md), then `references/framework-mode.md` and `how-to/spa.md`.
 
 - Route inside `app-layout` in `app/routes.ts`
+- Primary nav links render dynamically from `/auth/me` `menus` — do not hardcode new menu links in `app/routes/app-layout.tsx` (only add an icon case to `resolveNavIcon()` / `Icon` when introducing a new icon key)
 - `clientLoader`: `apiGet` (pass `request`; cookie is sent same-origin). 401 → `/login`
 - `<Link>` to ported screens. `<a href>` to leftover legacy (cetak: `target="_blank"`)
 - Reuse `app.css` tokens. Add CSS only for a missing pattern
