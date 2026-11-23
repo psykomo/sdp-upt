@@ -177,6 +177,16 @@ INSERT INTO pengguna (
 );
 SQL
 
+if [[ -f "$ROOT_DIR/scripts/sql/seed-sdp_pusat-identitas-001-20.sql" ]]; then
+	echo "Seeding synthetic UPT 001 rows into sdp_pusat..."
+	mysql_app sdp_pusat < "$ROOT_DIR/scripts/sql/seed-sdp_pusat-identitas-001-20.sql"
+fi
+
+if [[ -f "$ROOT_DIR/scripts/sql/seed-db001-identitas-20.sql" ]]; then
+	echo "Seeding synthetic UPT 001 rows into db001..."
+	mysql_app db001 < "$ROOT_DIR/scripts/sql/seed-db001-identitas-20.sql"
+fi
+
 verify_boot_flags
 
 cat <<'EOF'

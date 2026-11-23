@@ -157,9 +157,9 @@ database.default.username = …
 database.default.password = …
 ```
 
-`TenantContext::apply()` does **not** switch schemas in this mode. JWT `uptId` scopes **which rows** an UPT officer may see inside the shared schema. Kanwil scoping uses `upt.KANWIL` on JWT `uptId` (Kanwil code). Identitas implements this in `IdentitasAccessService`; other modules still need porting per slice.
+`TenantContext::apply()` does **not** switch schemas in this mode. JWT `uptId` scopes **which rows** an UPT officer may see inside the shared schema. Kanwil scoping uses `upt.KANWIL` on JWT `uptId` (Kanwil code). Shared row-scope primitives live in `App\Modules\Shared\Access\RowScope` and `PerkaraScopeRepository` (used by `IdentitasAccessService`).
 
-Row-level scoping beyond tenancy mode: Identitas uses `IdentitasAccessService` (`perkara.ID_UPT` / `upt.KANWIL`). `TenantContext::sharedDatabaseUptId()` remains a stub for generic reuse. Do not add `tenant_id` on legacy tables while PHP still reads them.
+Row-level scoping beyond tenancy mode: `Shared\Access\RowScope` + `PerkaraScopeRepository` (`perkara.ID_UPT` / `upt.KANWIL`). `TenantContext::sharedDatabaseUptId()` remains a stub for generic reuse. Do not add `tenant_id` on legacy tables while PHP still reads them.
 
 `SiteContextService::resolve()` still reads `001` after connect — empty → `isPusat`, Kanwil code → `isKanwil`. On national `shared_database`, optional login `tenantId` / `uptId` sets UPT officer context (`isPusat=false`, JWT `uptId`) without switching schema — mirrors legacy `upt_session`. Those flags go on the JWT; porting branches on them per [`PORTING.md`](PORTING.md) §2.
 

@@ -182,9 +182,12 @@ cp sdp-upt-api/env.national sdp-upt-api/.env   # set jwt.secret, encryption.key,
 
 # 3. Profile checks
 ./scripts/smoke-api-profiles.sh
+
+# 4. Full automated multi-profile gate (unit + feature against prod-sim + SPA build)
+./scripts/verify-profiles.sh
 ```
 
-PHPUnit: `cd sdp-upt-api && ./vendor/bin/phpunit tests/unit/TenantContextTest.php`
+PHPUnit: `cd sdp-upt-api && ./vendor/bin/phpunit --no-coverage --testsuite unit` or `--testsuite feature`
 
 Or SQL:
 

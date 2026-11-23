@@ -121,7 +121,7 @@ Branch on `CurrentUser` — **not** on `tenancy.mode`. Profile resolution order 
 - Grep legacy `upt_session` / `kanwil_session` — some screens filter in session; others (e.g. Identitas search) never did. On `shared_database` the API still needs scope even when legacy list SQL did not use session keys.
 - Entity-specific rules (e.g. Identitas “no active STA parent perkara → allow”) stay in that module — grep legacy before copying.
 
-**Reference implementation:** `sdp-upt-api/app/Modules/Identitas/Services/IdentitasAccessService.php` (copy shape per module until a shared helper exists).
+**Reference implementation:** `sdp-upt-api/app/Modules/Shared/Access/RowScope.php` and `PerkaraScopeRepository.php` (`IdentitasAccessService` is a thin wrapper over them). Reuse `RowScope` + `PerkaraScopeRepository` on every new perkara-bound module — do not copy-paste `EXISTS` SQL into services.
 
 **Verify**
 
@@ -163,8 +163,8 @@ New API-only tables use the same pattern. Do not split “legacy = repository, n
 - One repository per module aggregate (`IdentitasRepository` for `identitas` plus its sidik jari / kemiripan / log writes). A dedicated search repository is fine when the list query is a different shape.
 - Lookups stay in `DeskripsiLookup` / the Lookup module. Do not re-query `daftar_referensi` inside a domain service.
 - Module under `sdp-upt-api/app/Modules/<Domain>/` (Indonesian name for a pemasyarakatan process: `Identitas`, not `Identity`)
-- Route in `api/v1`, behind `jwt` and `menu:<id>`
-- Static paths before `(:segment)`
+- Route in `api/v1`, behind `jwt` and `menu:<id>[,<tipe>]` (register new menus in `App\Modules\Auth\Support\PortedMenuRegistry` so `/auth/me` and the SPA nav expose them automatically)
+- Dual-password (`LoginDP`) flows: call `POST /api/v1/auth/supervisor` with `menuId`, `resourceKey`, and `action` (`AuthService::issueSupervisorGrant` / `readSupervisorGrant`)
 - Envelope `{ ok, data }` / `{ ok, false, message }`
 - `RbacService::accessFor` on the payload
 - `DeskripsiLookup`, `DateFormat`, `PublicOrigins` for labels, dates, `links.*`
@@ -172,7 +172,7 @@ New API-only tables use the same pattern. Do not split “legacy = repository, n
 - Media: prefix stored paths with `legacyBase()`
 - Writes: `UnitOfWork::transactional()` (inner calls join the parent; CI4 only commits the outermost)
 - Services construct their own collaborators (`new IdentitasUpdateService()`). The controller does HTTP only.
-- **Row scope** on perkara-bound slices: assert on by-key routes, filter on search/export — see §2 Row scope. Copy `IdentitasAccessService` until a shared helper exists.
+- **Row scope** on perkara-bound slices: assert on by-key routes, filter on search/export — see §2 Row scope. Use `Shared\Access\RowScope` + `PerkaraScopeRepository`.
 
 ## 5. Frontend
 
@@ -214,8 +214,8 @@ Public hosts (`sdp.caripasal.com`, `sdp-api…`, `sdp-front…`) already flow th
 ## 7. Verify
 
 - Real row from this DB (UPT: `db_sdp`)
-- UPT / Pusat / Kanwil behavior per §2 (national verify on `sdp_pusat` when available)
-- Row scope: cross-profile 403 on national when applicable (§2 Row scope)
+- UPT / Pusat / Kanwil / multi-tenant behavior via `tests/feature/<Module>ProfilesFeatureTest.php` and `./scripts/verify-profiles.sh`
+- Row scope: cross-profile 403 on national (`sdp_pusat`) verified automatically (§2 Row scope)
 - Old URL without `legacy=1` lands on the new page, still logged in
 - `?legacy=1` still shows PHP
 - 404 and no permission
