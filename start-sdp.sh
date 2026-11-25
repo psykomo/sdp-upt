@@ -204,8 +204,8 @@ start_legacy() {
 	echo "Starting legacy on $OFFICER_BIND:$LEGACY_PORT"
 	(
 		cd "$LEGACY_DIR"
-		exec "$LEGACY_PHP" -S "$OFFICER_BIND:$LEGACY_PORT" -t "$LEGACY_DIR/sdp" "$LEGACY_DIR/sdp/index.php"
-	) >"$RUN_DIR/legacy.log" 2>&1 &
+		exec nohup "$LEGACY_PHP" -S "$OFFICER_BIND:$LEGACY_PORT" -t "$LEGACY_DIR/sdp" "$LEGACY_DIR/sdp/index.php"
+	) </dev/null >"$RUN_DIR/legacy.log" 2>&1 &
 	write_pid legacy $!
 }
 
@@ -214,11 +214,16 @@ start_api() {
 		echo "php was not found on PATH (needed for the CI4 API)." >&2
 		return 1
 	fi
+	local rewrite="$API_DIR/vendor/codeigniter4/framework/system/rewrite.php"
+	if [[ ! -f "$rewrite" ]]; then
+		echo "API dependencies are missing ($rewrite). Run composer install in $API_DIR" >&2
+		return 1
+	fi
 	echo "Starting API on $API_BIND:$API_PORT (localhost only)"
 	(
 		cd "$API_DIR"
-		exec php spark serve --host "$API_BIND" --port "$API_PORT"
-	) >"$RUN_DIR/api.log" 2>&1 &
+		exec nohup php -S "$API_BIND:$API_PORT" -t "$API_DIR/public" "$rewrite"
+	) </dev/null >"$RUN_DIR/api.log" 2>&1 &
 	write_pid api $!
 }
 
@@ -232,8 +237,8 @@ start_frontend() {
 		echo "Starting frontend (Vite HMR) on $OFFICER_BIND:$FRONTEND_PORT"
 		(
 			cd "$FRONTEND_DIR"
-			exec npm run dev -- --host "$OFFICER_BIND" --port "$FRONTEND_PORT" --strictPort
-		) >"$RUN_DIR/frontend.log" 2>&1 &
+			exec nohup npm run dev -- --host "$OFFICER_BIND" --port "$FRONTEND_PORT" --strictPort
+		) </dev/null >"$RUN_DIR/frontend.log" 2>&1 &
 		write_pid frontend $!
 		return 0
 	fi
@@ -258,8 +263,8 @@ start_frontend() {
 		export FRONTEND_PORT
 		export API_PORT
 		export OFFICER_BIND
-		exec caddy run --config "$ROOT_DIR/deploy/Caddyfile" --adapter caddyfile
-	) >"$RUN_DIR/frontend.log" 2>&1 &
+		exec nohup caddy run --config "$ROOT_DIR/deploy/Caddyfile" --adapter caddyfile
+	) </dev/null >"$RUN_DIR/frontend.log" 2>&1 &
 	write_pid frontend $!
 }
 
