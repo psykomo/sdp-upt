@@ -60,3 +60,13 @@ The **app** only knows same-origin `/api/v1`. It does not know Caddy, Apache, or
 | Central MariaDB, one schema per UPT | Same API artifact | `tenancy.mode=database_per_tenant`. UPT 093 → `db093`, UPT 001 → `db001` on one server. |
 
 Tenant and MariaDB are API concerns. Do not fork the SPA. Modes: [`TENANCY.md`](TENANCY.md).
+
+## Config without `.env` (IonCube / Windows & Linux)
+
+UPT deploys ship **no `.env` file**. Without `.env`, CI4 defaults `ENVIRONMENT` to `production` and reads IonCube-encoded PHP config classes under `sdp-upt-api/app/Config/` (`App.php`, `Database.php`, `Encryption.php`, `Sdp.php`). Local development can keep using `.env` (`BaseConfig` supports both `sdp.*` and legacy dotted aliases such as `jwt.secret`, `tenancy.mode`, `legacy.root`).
+
+- Keep `Config\Optimize::$configCacheEnabled = false` so CI4 never serializes config secrets into `writable/cache/`.
+- Do not obfuscate class or property names in `app/Config/*` during IonCube encoding (`Factories` / `BaseConfig` rely on exact names).
+- Keep UPT and Pusat `jwtSecret` / `encryption.key` distinct across build profiles.
+- **Per-UPT `legacyRoot` override (Windows & Linux):** Standard UPT installs (`SDP/htdocs/www/sdp` beside `SDP/sdp-upt-api`) work out of the box with no `sdp-local.php` (`StoredUploadPath` auto-detects `../htdocs/www/sdp`, then `../102sdp/sdp` for local dev). Only non-standard folder layouts need an unencoded sibling `../sdp-local.php` returning `['legacyRoot' => '...']` (relative from `sdp-upt-api/` or absolute). Only `legacyRoot` is allowlisted from that file; secrets and tenancy mode stay inside encoded `app/Config/`.
+- `legacy.baseURL` does not vary per UPT when UPTs differ only by server IP: `PublicOrigins` rewrites `http://127.0.0.1:8080` from `X-SDP-Public-Host` / `X-Forwarded-Host` / `Host`.

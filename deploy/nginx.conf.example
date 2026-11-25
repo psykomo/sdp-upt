@@ -68,6 +68,7 @@ server {
 		proxy_http_version 1.1;
 		proxy_set_header Cookie $http_cookie;
 		proxy_set_header Authorization $http_authorization;
+		proxy_set_header X-Forwarded-Host $host;
 		proxy_set_header X-SDP-Public-Host $http_x_sdp_public_host;
 		proxy_set_header X-SDP-Supervisor-Grant $http_x_sdp_supervisor_grant;
 		proxy_set_header Content-Type $content_type;

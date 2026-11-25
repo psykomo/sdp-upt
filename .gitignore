@@ -1,6 +1,7 @@
 .run/
 .DS_Store
 .tmp/
+/sdp-local.php
 
 # Separate remotes — do not add as gitlinks
 /102sdp/
